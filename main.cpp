@@ -31,6 +31,11 @@ int main() {
         // i = 4; compilation error
     }
 
+    std::vector<int> t = {2, 2, 6};
+    for (auto [i, x] : enumerate(std::move(t))) {
+
+    }
+
     for (auto [i, x] : enumerate(v)) {
         std::cout << "v[" << i << "] = " << x << std::endl;
     }
@@ -59,7 +64,7 @@ int main() {
 
     int arr[] = {2, 4, 5};
     for (auto [i, x] : enumerate(arr)) {
-        x += i;
+        x += static_cast<int>(i);
     }
     std::cout << arr[0] << ' '
               << arr[1] << ' '

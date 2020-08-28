@@ -3,128 +3,136 @@
 #include <concepts>
 #include <iterator>
 
+
 template<typename C>
 concept iterable = requires(C const &iterable) {
     { std::begin(iterable) } -> std::forward_iterator;
     { std::end(iterable) } -> std::forward_iterator;
 };
 
-template<iterable Container>
-auto enumerate(Container && container);
+
+template <iterable Container>
+auto enumerate(Container & container);
+template <iterable Container>
+auto enumerate(Container const & container);
+
 
 namespace detail {
-    class non_copyable_non_movable {
-    public:
+    struct non_copyable_non_movable {
         non_copyable_non_movable() = default;
-
         non_copyable_non_movable(non_copyable_non_movable const &) = delete;
-
         non_copyable_non_movable(non_copyable_non_movable &&) = delete;
-
         non_copyable_non_movable &operator=(non_copyable_non_movable const &) = delete;
-
         non_copyable_non_movable &operator=(non_copyable_non_movable &&) = delete;
     };
 
-    template<typename Iter>
-    struct xvalue_pair;
+    template<std::forward_iterator Iter>
+    class enumeration_iterator;
 
-    template<typename Iter>
+    template<std::forward_iterator Iter>
     class implicit_reference_wrapper : public non_copyable_non_movable {
+        // type with const-ness
         using T = std::remove_reference_t<typename std::iterator_traits<Iter>::reference>;
-    public:
-        operator T &() { return *data; }
 
-        operator T const &() const { return *data; }
+    public:
+        explicit implicit_reference_wrapper(Iter data) : data_(data) {}
+
+        operator T & () { return *data_; }
+        operator T const & () const { return *data_; }
 
         template<typename U>
         requires std::is_assignable_v<T &, U>
-        auto operator=(U &&value) {
-            return *data = std::forward<U>(value);
+        auto operator=(U && value) {
+            return *data_ = std::forward<U>(value);
         }
 
     private:
-        friend struct xvalue_pair<Iter>;
 
-        [[maybe_unused]] explicit implicit_reference_wrapper(Iter data) : data(data) {}
-
-        Iter data;
+        Iter data_;
     };
 
 
-    template<typename Iter>
-    struct xvalue_pair {
-        xvalue_pair(const size_t index, Iter it) : index(index), wrapper(it) {}
-
-        std::size_t index;
-        implicit_reference_wrapper<Iter> wrapper;
-    };
-
-
-    template<typename Iter>
+    template <std::forward_iterator Iter>
     class enumeration_iterator : non_copyable_non_movable {
     public:
+        using self_type = enumeration_iterator<Iter>;
+        using reference = std::pair<const std::size_t, implicit_reference_wrapper<Iter>>;
+        using pointer = typename std::iterator_traits<Iter>::pointer;
+        using iterator_category = std::forward_iterator_tag;
+
         explicit enumeration_iterator(Iter outer_iterator)
-                : outer(outer_iterator), index{0} {}
+            : outer_(outer_iterator)
+            , index_{0}
+        {}
 
-        friend bool operator==(enumeration_iterator const &a, enumeration_iterator const &b) {
-            return a.outer == b.outer;
-        }
-
-        friend bool operator!=(enumeration_iterator const &a, enumeration_iterator const &b) {
-            return a.outer != b.outer;
-        }
-
-        auto &operator++() {
-            ++outer;
-            ++index;
+        self_type & operator++() {
+            ++outer_;
+            ++index_;
             return *this;
         }
 
-        auto operator++(int) {
-            auto copy = *this;
+        self_type operator++(int) {
+            auto tmp = *this;
             ++*this;
-            return copy;
+            return tmp;
         }
 
-        auto operator*() {
-            return xvalue_pair(index, outer);
+        reference operator*() {
+            return reference(index_, outer_);
+        }
+
+        pointer operator->() {
+            return outer_.operator->();
+        }
+
+        bool operator==(enumeration_iterator const & other) const {
+            return outer_ == other.outer_;
+        }
+
+        bool operator!=(enumeration_iterator const & other) const {
+            return outer_ != other.outer_;
         }
 
     private:
-        Iter outer;
-        std::size_t index;
+        Iter outer_;
+        std::size_t index_;
     };
 
 
-    template<typename ContainerRef>
+    template <std::forward_iterator Iter>
     class enumeration_impl : public non_copyable_non_movable {
     public:
-        [[maybe_unused]] friend auto begin(enumeration_impl &enumerator) {
-            return enumeration_iterator(std::begin(enumerator.container));
-        }
-
-        [[maybe_unused]] friend auto end(enumeration_impl &enumerator) {
-            return enumeration_iterator(std::end(enumerator.container));
-        }
+        auto begin() { return enumeration_iterator(begin_); }
+        auto end() { return enumeration_iterator(end_); }
 
     private:
-        explicit enumeration_impl(ContainerRef container) : container(container) {}
+        explicit enumeration_impl(Iter begin, Iter end)
+            : begin_(begin)
+            , end_(end)
+        {}
 
-        template<iterable Container>
-        friend auto::enumerate(Container &&container);
+        template <iterable Container>
+        friend auto ::enumerate(Container & container);
+        template <iterable Container>
+        friend auto ::enumerate(Container const & container);
 
-        ContainerRef container;
+        Iter begin_;
+        Iter end_;
     };
 
 }
 
-template<iterable Container>
-auto enumerate(Container && container) {
-    return detail::enumeration_impl<Container>{container};
+template <iterable Container>
+auto enumerate(Container & container) {
+    return detail::enumeration_impl{std::begin(container), std::end(container)};
+}
+
+template <iterable Container>
+auto enumerate(Container const & container) {
+    return detail::enumeration_impl{std::begin(container), std::end(container)};
 }
 
 template<typename T>
-auto enumerate(std::initializer_list<T> && init_list) {
+auto enumerate(std::initializer_list<T> init_list) {
     return enumerate<std::initializer_list<T>>(std::move(init_list));
 }

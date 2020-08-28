@@ -1,5 +1,21 @@
 # Cpp-enumerate
-My python-style enumerate implementation for C++
+##### My python-style `enumerate` implementation for C++
+
+---
+
+Declaration:
+```c++
+template <iterable Container>
+auto enumerate(Container & container); // yields std::pair<const std::size_t, element_ref>
+                                       //     or std::pair<const std::size_t, element_cref>
+
+template <iterable Container>
+auto enumerate(Container const & container); // yields std::pair<const std::size_t, element_cref>
+```
+
+---
+
+Features:
 
 * Simple iteration
 ```c++
@@ -24,7 +40,7 @@ My python-style enumerate implementation for C++
         x += i;
     }
 
-    // v == {0, 7, 9, 13}
+    // now v == {0, 7, 9, 13}
 ```
 
 * Built-in arrays and C-strings
