@@ -1,5 +1,6 @@
-# Cpp-enumerate
-##### My python-style `enumerate` implementation for C++
+# Cpp-enumerate [![Build Status](https://travis-ci.com/ZhekehZ/Cpp-enumerate.svg?token=ML5sxGgAoF8mdBb9oR6a&branch=master)](https://travis-ci.com/ZhekehZ/Cpp-enumerate)
+
+##### My python-style `enumerate` implementation for C++ 
 
 ---
 
