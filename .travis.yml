@@ -1,0 +1,19 @@
+language: cpp
+sudo: required
+os:
+  - linux
+dist: trusty
+compiler:
+  - gcc
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-10
+before_install:
+  - export CXX=g++-10
+script:
+  - cmake .
+  - make
+  - ./tests
