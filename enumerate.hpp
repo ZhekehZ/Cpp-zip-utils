@@ -15,7 +15,6 @@ template <iterable Container>
 auto enumerate(Container & container);
 template <iterable Container>
 auto enumerate(Container const & container);
-auto enumerate(const char * str);
 
 namespace detail {
     struct non_copyable_non_movable {
@@ -110,7 +109,6 @@ namespace detail {
         friend auto ::enumerate(Container & container);
         template <iterable Container>
         friend auto ::enumerate(Container const & container);
-        friend auto ::enumerate(const char * str);
 
         Iter begin_;
         Iter end_;
@@ -129,7 +127,7 @@ auto enumerate(Container const & container) {
 }
 
 auto enumerate(const char * str) {
-    return detail::enumeration_impl{str, str + strlen(str) - 1};
+    return enumerate(std::string_view(str));
 }
 
 template<typename T>

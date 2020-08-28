@@ -112,8 +112,8 @@ TEST_CASE("No copy no move") {
         A() = default;
         A(A const &) { passed = false; }
         A(A &&) noexcept { passed = false; }
-        A& operator=(A const &) { passed = false; }
-        A& operator=(A &&) noexcept { passed = false; }
+        A& operator=(A const &) { passed = false; return *this; }
+        A& operator=(A &&) noexcept { passed = false; return *this; }
     };
 
     std::vector<A> v(10);
