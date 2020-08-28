@@ -15,7 +15,7 @@ template <iterable Container>
 auto enumerate(Container & container);
 template <iterable Container>
 auto enumerate(Container const & container);
-
+auto enumerate(const char * str);
 
 namespace detail {
     struct non_copyable_non_movable {
@@ -30,25 +30,20 @@ namespace detail {
     class enumeration_iterator;
 
     template<std::forward_iterator Iter>
-    class implicit_reference_wrapper : public non_copyable_non_movable {
-        // type with const-ness
-        using T = std::remove_reference_t<typename std::iterator_traits<Iter>::reference>;
-
+    class reference_holder : public non_copyable_non_movable {
     public:
-        explicit implicit_reference_wrapper(Iter data) : data_(data) {}
+        // type with const-ness
+        using T = typename std::iterator_traits<Iter>::reference;
+        friend class enumeration_iterator<Iter>;
 
-        operator T & () { return *data_; }
-        operator T const & () const { return *data_; }
-
-        template<typename U>
-        requires std::is_assignable_v<T &, U>
-        auto operator=(U && value) {
-            return *data_ = std::forward<U>(value);
-        }
+        const std::size_t index_;
+        T ref_;
 
     private:
-
-        Iter data_;
+        reference_holder(size_t index, T ref)
+                : index_(index)
+                , ref_(ref)
+        {}
     };
 
 
@@ -56,7 +51,7 @@ namespace detail {
     class enumeration_iterator : non_copyable_non_movable {
     public:
         using self_type = enumeration_iterator<Iter>;
-        using reference = std::pair<const std::size_t, implicit_reference_wrapper<Iter>>;
+        using reference = reference_holder<Iter>;
         using pointer = typename std::iterator_traits<Iter>::pointer;
         using iterator_category = std::forward_iterator_tag;
 
@@ -78,7 +73,7 @@ namespace detail {
         }
 
         reference operator*() {
-            return reference(index_, outer_);
+            return reference{index_, *outer_};
         }
 
         pointer operator->() {
@@ -115,6 +110,7 @@ namespace detail {
         friend auto ::enumerate(Container & container);
         template <iterable Container>
         friend auto ::enumerate(Container const & container);
+        friend auto ::enumerate(const char * str);
 
         Iter begin_;
         Iter end_;
@@ -132,7 +128,11 @@ auto enumerate(Container const & container) {
     return detail::enumeration_impl{std::begin(container), std::end(container)};
 }
 
+auto enumerate(const char * str) {
+    return detail::enumeration_impl{str, str + strlen(str) - 1};
+}
+
 template<typename T>
-auto enumerate(std::initializer_list<T> init_list) {
+auto enumerate(std::initializer_list<T> && init_list) {
     return enumerate<std::initializer_list<T>>(std::move(init_list));
 }

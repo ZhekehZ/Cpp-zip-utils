@@ -13,10 +13,12 @@ concept iterable = requires(C const &iterable) {
 
 template <iterable Container>
 auto enumerate(Container & container); // yields std::pair<const std::size_t, element_ref>
-                                       //     or std::pair<const std::size_t, element_cref>
 
 template <iterable Container>
 auto enumerate(Container const & container); // yields std::pair<const std::size_t, element_cref>
+
+template <typename T>
+auto enumerate(std::initializer_list<T> && list);
 ```
 
 ---
@@ -27,7 +29,7 @@ auto enumerate(Container const & container); // yields std::pair<const std::size
 ```c++
 std::vector<int> v = {5, 6, 7, 10};
 
-for (auto const [i, x] : enumerate(v)) {
+for (auto [i, x] : enumerate(v)) {
     std::cout << "v[" << i << "] = " << x << std::endl;
 }
 
@@ -56,7 +58,7 @@ for (auto [j, x] : enumerate(array)) {
     /* CODE */
 }
 
-for (auto const [i, c] : enumerate("hello")) {
+for (auto [i, c] : enumerate("hello")) {
     /* CODE */
 }
 ```
