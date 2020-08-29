@@ -35,7 +35,7 @@ template <std::size_t N>
 void build_and_print_fibonacci() {
     int F[N] = {0, 1};
 
-    for (auto & [x, y, z] : zip(F, sub<1>(F), sub<2>(F))) {
+    for (auto & [x, y, z] : zip(F, sub<1>(F), sub<2>(F))) {     // <-- zip
         z = x + y;
     }
     

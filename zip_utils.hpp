@@ -155,8 +155,6 @@ namespace zip_utils {
             using iterator_category = std::forward_iterator_tag;
             using difference_type = int;
 
-            explicit counting_iterator(std::size_t start = 0) : index_(start) {}
-
             reference operator*() const {
                 return index_;
             }
@@ -184,20 +182,16 @@ namespace zip_utils {
             std::size_t index_;
         };
 
-        class counter {
-        public:
-            explicit counter(std::size_t start = 0) : start_(start) {}
+        static constexpr counting_iterator end_count{};
 
+        struct counter {
             [[nodiscard]] counting_iterator begin() const {
-                return counting_iterator{start_};
+                return counting_iterator{};
             }
 
             [[nodiscard]] static counting_iterator end() {
-                return counting_iterator();
+                return end_count;
             }
-
-        private:
-            std::size_t start_;
         };
 
         static_assert(std::forward_iterator<counting_iterator>);
