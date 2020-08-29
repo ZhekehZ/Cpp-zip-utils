@@ -105,7 +105,7 @@ namespace zip_utils {
                 typename iterator_pack<Iterators...>::base & c_tup = iterator;
                 typename iterator_pack<Iterators...>::base & o_tup = other.iterator;
                 return [&]<std::size_t ... I>(std::index_sequence<I...>) {
-                    return ((std::get<I>(c_tup) == get<I>(o_tup)) || ...);
+                    return ((std::get<I>(c_tup) == std::get<I>(o_tup)) || ...);
                 }(std::make_index_sequence<sizeof...(Iterators)>{});
             }
 
