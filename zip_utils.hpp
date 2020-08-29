@@ -3,47 +3,39 @@
 #include <concepts>
 #include <iterator>
 #include <tuple>
+#include <ranges>
 
-namespace zip_utils {
+namespace zip_utils::detail {
 
-    template<typename C>
-    concept forward_iterable = requires(C const & iterable) {
-        { std::begin(iterable) } -> std::forward_iterator;
-        { std::end(iterable) } -> std::forward_iterator;
+    template<std::forward_iterator ... Iterators>
+    class iterator_pack : public std::tuple<Iterators...> {
+    public:
+        using base = std::tuple<Iterators...>;
+
+        using base::tuple;
+
+        template<std::size_t I>
+        auto &get() &{
+            return *std::get<I>(static_cast<base>(*this));
+        }
+
+        template<std::size_t I>
+        [[nodiscard]] const auto &get() const &{
+            return *std::get<I>(static_cast<base>(*this));
+        }
+
+        template<std::size_t I>
+        auto get() &&{
+            return *std::get<I>(static_cast<base>(*this));
+        }
+
+        template<std::size_t I>
+        [[nodiscard]] auto get() const &&{
+            return *std::get<I>(static_cast<base>(*this));
+        }
     };
 
-    namespace detail {
-
-        template<std::forward_iterator ... Iterators>
-        class iterator_pack : public std::tuple<Iterators...> {
-        public:
-            using base = std::tuple<Iterators...>;
-
-            using base::tuple;
-
-            template<std::size_t I>
-            auto &get() &{
-                return *std::get<I>(static_cast<base>(*this));
-            }
-
-            template<std::size_t I>
-            [[nodiscard]] const auto &get() const &{
-                return *std::get<I>(static_cast<base>(*this));
-            }
-
-            template<std::size_t I>
-            auto get() &&{
-                return *std::get<I>(static_cast<base>(*this));
-            }
-
-            template<std::size_t I>
-            [[nodiscard]] auto get() const &&{
-                return *std::get<I>(static_cast<base>(*this));
-            }
-        };
-
-    } // detail
-} // zip_utils
+} // zip_utils::detail
 
 namespace std {
 
@@ -143,7 +135,7 @@ namespace zip_utils {
 
     } // detail
 
-    template <forward_iterable ... Containers>
+    template <std::ranges::forward_range ... Containers>
     auto zip(Containers && ... containers) {
         using namespace detail;
         return zip_impl{zip_iterator{std::begin(std::forward<Containers>(containers))...},
@@ -200,7 +192,7 @@ namespace zip_utils {
                 return counting_iterator{start_};
             }
 
-            [[nodiscard]] counting_iterator end() const {
+            [[nodiscard]] static counting_iterator end() {
                 return counting_iterator();
             }
 
@@ -209,11 +201,11 @@ namespace zip_utils {
         };
 
         static_assert(std::forward_iterator<counting_iterator>);
-        static_assert(forward_iterable < counter > );
+        static_assert(std::ranges::forward_range<counter>);
 
     } // detail
 
-    template <forward_iterable ... Containers>
+    template <std::ranges::forward_range ... Containers>
     auto enumerate(Containers && ... containers) {
         using namespace detail;
         return zip(counter{}, std::forward<Containers>(containers) ...);

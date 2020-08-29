@@ -5,21 +5,12 @@
 
 #### Declaration:
 ```c++
-// Containers must meet the following concept:
-template<typename C>
-concept forward_iterable = requires(C const &forward_iterable) {
-    { std::begin(forward_iterable) } -> std::forward_iterator;
-    {  std::end(forward_iterable)  } -> std::forward_iterator;
-};
-```
-
-```c++
-template <forward_iterable ... Containers>
+template <std::ranges::forward_range ... Containers>
 auto zip(Containers && ... containers);
 ```
 
 ```c++
-template <forward_iterable ... Containers>
+template <std::ranges::forward_range ... Containers>
 auto enumerate(Containers && ... containers);
 ```
 ---

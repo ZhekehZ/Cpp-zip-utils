@@ -237,5 +237,5 @@ TEST_CASE("example") {
 
     for (auto [i, x] : enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34})) {
         REQUIRE(F[i] == x);
-    };
+    }
 }
