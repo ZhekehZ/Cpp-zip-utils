@@ -122,7 +122,7 @@ namespace zip_utils {
 
         template<std::forward_iterator ... Iterators>
         class zip_impl {
-            static_assert(sizeof...(Iterators) > 0, "NEED_AT_LEAST_ONE_ARGUMENT");
+            static_assert(sizeof...(Iterators) > 0, "AT_LEAST_ONE_ARGUMENT_NEEDED");
             using Iter = zip_iterator<Iterators...>;
         public:
             zip_impl(Iter begin, Iter end)

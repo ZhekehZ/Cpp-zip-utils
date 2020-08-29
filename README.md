@@ -32,6 +32,27 @@ using namespace zip_utils;
     using zip_utils::enumerate;
     using zip_utils::operator""_sw;
 */
+template <typename T, std::size_t N>
+using arr_ref = T (&)[N];
+
+template <std::size_t S, typename T, std::size_t N>
+auto sub (arr_ref<T, N> a) -> arr_ref<T, N-S> {
+    return reinterpret_cast<arr_ref<T, N-S>>(a[S]);
+} // returns reference to built-in array's tail
+
+template <std::size_t N>
+void build_and_print_fibonacci() {
+    int F[N] = {0, 1};
+
+    for (auto & [x, y, z] : zip(F, sub<1>(F), sub<2>(F))) {
+        z = x + y;
+    }
+    
+    for (auto x : F) {
+        std::cout << x << ' '; // 0 1 1 2 3 5 8 13 ...
+    }
+}
+
 ```
 ---
 #### Features:

@@ -218,3 +218,24 @@ TEST_CASE("Enumerate stress <kek>", "[enumerate]") {
 
     REQUIRE(ss_enumerate.str() == ss_expected.str());
 }
+
+template <typename T, std::size_t N>
+using arr_ref = T (&)[N];
+
+template <std::size_t S, typename T, std::size_t N>
+auto sub (arr_ref<T, N> a) -> arr_ref<T, N-S> {
+    return reinterpret_cast<arr_ref<T, N-S>>(a[S]);
+}
+
+
+TEST_CASE("example") {
+    int F[10] = {0, 1};
+
+    for (auto & [x, y, z] : zip(F, sub<1>(F), sub<2>(F))) {
+        z = x + y;
+    }
+
+    for (auto [i, x] : enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34})) {
+        REQUIRE(F[i] == x);
+    };
+}
