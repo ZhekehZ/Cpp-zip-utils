@@ -16,10 +16,9 @@ namespace zip_utils {
 
         template<std::forward_iterator ... Iterators>
         class iterator_pack : public std::tuple<Iterators...> {
-        private:
+        public:
             using base = std::tuple<Iterators...>;
 
-        public:
             using base::tuple;
 
             template<std::size_t I>
@@ -89,8 +88,9 @@ namespace zip_utils {
             }
 
             zip_iterator &operator++() {
+                typename iterator_pack<Iterators...>::base & tup = iterator;
                 [&]<std::size_t ... I>(std::index_sequence<I ...>) {
-                    (++get<I>(iterator), ...);
+                    (++std::get<I>(tup), ...);
                 }(std::make_index_sequence<sizeof...(Iterators)>{});
                 return *this;
             }
@@ -102,8 +102,10 @@ namespace zip_utils {
             }
 
             bool operator==(zip_iterator const &other) const {
+                typename iterator_pack<Iterators...>::base & c_tup = iterator;
+                typename iterator_pack<Iterators...>::base & o_tup = other.iterator;
                 return [&]<std::size_t ... I>(std::index_sequence<I...>) {
-                    return ((get<I>(iterator) == get<I>(other.iterator)) || ...);
+                    return ((std::get<I>(c_tup) == get<I>(o_tup)) || ...);
                 }(std::make_index_sequence<sizeof...(Iterators)>{});
             }
 

@@ -63,7 +63,8 @@ using namespace zip_utils;
             std::cout << y;  
         }
       
-        // Note: you can use `_sw` suffix (sw stands for std::string_view) for c-strings to avoid terminating zero      
+        // Note: you can use `_sw` suffix (sw stands for std::string_view) for c-strings 
+        //    to avoid terminating zero: 
         for (auto const & [x] : zip("abc"_sw)) { /* x in [a b c] */ }
         ```
     - Zip result is also forward_iterable
