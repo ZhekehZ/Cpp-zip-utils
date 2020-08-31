@@ -1,4 +1,4 @@
-# Cpp-zip-utils [![Build Status](https://travis-ci.com/ZhekehZ/Cpp-enumerate.svg?token=ML5sxGgAoF8mdBb9oR6a&branch=master)](https://travis-ci.com/ZhekehZ/Cpp-enumerate)
+# Cpp-zip-utils [![Build Status](https://travis-ci.com/ZhekehZ/Cpp-zip-utils.svg?branch=master)](https://travis-ci.com/ZhekehZ/Cpp-zip-utils)
 #### _Some structured_binding-friendly functions for `C+-`_
 
 ---
