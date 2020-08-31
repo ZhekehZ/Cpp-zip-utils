@@ -7,31 +7,93 @@
 
 namespace zip_utils::detail {
 
+    template <typename Tuple, std::size_t I>
+    static constexpr bool nothrow_deref_tuple_element = requires {
+        requires requires(std::tuple_element_t<I, Tuple> & t) {
+            { *t } noexcept;
+        };
+    };
+
+    template <typename T>
+    static constexpr bool nothrow_comparable = requires (const T & t) {
+        { t == t } noexcept;
+    };
+
+    template <typename T>
+    static constexpr bool nothrow_incrementable = requires (T & t) {
+        { ++t } noexcept;
+    };
+
     template<std::forward_iterator ... Iterators>
     class iterator_pack : public std::tuple<Iterators...> {
     public:
         using base = std::tuple<Iterators...>;
-
         using base::tuple;
 
-        template<std::size_t I>
-        auto &get() &{
+        template <std::size_t I>
+        constexpr auto &get() & noexcept (nothrow_deref_tuple_element<base, I>) {
             return *std::get<I>(static_cast<base>(*this));
         }
 
-        template<std::size_t I>
-        [[nodiscard]] const auto &get() const &{
+        template <std::size_t I>
+        [[nodiscard]] constexpr const auto & get() const &
+            noexcept (nothrow_deref_tuple_element<const base, I>)
+        {
             return *std::get<I>(static_cast<base>(*this));
         }
 
-        template<std::size_t I>
-        auto get() &&{
+        template <std::size_t I>
+        constexpr auto get() &&  noexcept (nothrow_deref_tuple_element<base, I>) {
             return *std::get<I>(static_cast<base>(*this));
         }
 
-        template<std::size_t I>
-        [[nodiscard]] auto get() const &&{
+        template <std::size_t I>
+        [[nodiscard]] constexpr auto get() const &&
+            noexcept (nothrow_deref_tuple_element<const base, I>)
+        {
             return *std::get<I>(static_cast<base>(*this));
+        }
+
+        constexpr bool operator==(iterator_pack const & other) const
+            noexcept ((nothrow_comparable<Iterators> && ...))
+        {
+            const base & self = *this;
+            const base & that = other;
+            return [&]<std::size_t ... I>(std::index_sequence<I...>) {
+                return ((std::get<I>(self) == std::get<I>(that)) || ...);
+            }(std::make_index_sequence<sizeof...(Iterators)>{});
+        }
+
+        constexpr bool operator!=(iterator_pack const & other) const
+            noexcept ((nothrow_comparable<Iterators> && ...))
+        {
+            return !(*this == other);
+        }
+
+        template <std::size_t I>
+        constexpr void next(std::size_t val)
+            noexcept (requires (base & ip) { { ip = std::next(std::get<I>(ip), val) } noexcept; })
+        {
+            base & self = *this;
+            auto & it = std::get<I>(self);
+            it = std::next(it, val);
+        }
+
+        constexpr void inc()
+            noexcept ((nothrow_incrementable<Iterators> && ...))
+        {
+            auto inc = [&]<std::size_t ... I>(std::index_sequence<I ...>, base & tup) {
+                (++std::get<I>(tup), ...);
+            };
+
+            // Strong exception guarantee
+            if constexpr ((nothrow_incrementable<Iterators> && ...)) {
+                inc(std::make_index_sequence<sizeof...(Iterators)>{}, *this);
+            } else {
+                base self = *this;
+                inc(std::make_index_sequence<sizeof...(Iterators)>{}, self);
+                static_cast<base&>(*this) = self;
+            }
         }
     };
 
@@ -70,44 +132,47 @@ namespace zip_utils {
             using reference = value_type &;
             using iterator_category = std::forward_iterator_tag;
             using difference_type = int;
+            using IterPack = iterator_pack<Iterators...>;
 
-            zip_iterator() = default;
+            constexpr zip_iterator() noexcept = default;
 
-            explicit zip_iterator(Iterators ... iterators) : iterator(iterators...) {}
+            constexpr explicit zip_iterator(Iterators ... iterators)
+                noexcept (noexcept (IterPack(iterators...)))
+                : iterator(iterators...)
+            {}
 
-            reference operator*() const {
-                return iterator;
+            constexpr reference operator*() const noexcept {
+                return const_cast<reference>(iterator);
             }
 
-            zip_iterator &operator++() {
-                typename iterator_pack<Iterators...>::base & tup = iterator;
-                [&]<std::size_t ... I>(std::index_sequence<I ...>) {
-                    (++std::get<I>(tup), ...);
-                }(std::make_index_sequence<sizeof...(Iterators)>{});
+            constexpr zip_iterator & operator++() noexcept (noexcept(this->iterator.inc())) {
+                iterator.inc();
                 return *this;
             }
 
-            zip_iterator operator++(int) {
+            constexpr zip_iterator operator++(int)
+                noexcept (noexcept(zip_iterator(++*this)))
+            {
                 auto copy = *this;
                 ++*this;
                 return copy;
             }
 
-            bool operator==(zip_iterator const &other) const {
-                typename iterator_pack<Iterators...>::base & c_tup = iterator;
-                typename iterator_pack<Iterators...>::base & o_tup = other.iterator;
-                return [&]<std::size_t ... I>(std::index_sequence<I...>) {
-                    return ((std::get<I>(c_tup) == std::get<I>(o_tup)) || ...);
-                }(std::make_index_sequence<sizeof...(Iterators)>{});
+            constexpr bool operator==(zip_iterator const & other) const
+                noexcept (noexcept(iterator == iterator))
+            {
+                return iterator == other.iterator;
             }
 
-            bool operator!=(zip_iterator const &other) const {
-                return !(*this == other);
+            constexpr bool operator!=(zip_iterator const & other) const
+                noexcept (noexcept(iterator == iterator))
+            {
+                return iterator != other.iterator;
             }
 
         private:
 
-            mutable iterator_pack<Iterators...> iterator;
+            IterPack iterator;
         };
 
         static_assert(std::forward_iterator<zip_iterator<int *>>);
@@ -117,14 +182,21 @@ namespace zip_utils {
             static_assert(sizeof...(Iterators) > 0, "AT_LEAST_ONE_ARGUMENT_NEEDED");
             using Iter = zip_iterator<Iterators...>;
         public:
-            zip_impl(Iter begin, Iter end)
-                    : begin_(std::move(begin)), end_(std::move(end)) {}
+            constexpr zip_impl(Iter begin, Iter end)
+                noexcept (std::is_nothrow_move_assignable_v<Iter>)
+                : begin_(std::move(begin))
+                , end_(std::move(end))
+            {}
 
-            auto begin() const {
+            constexpr auto begin() const noexcept
+                (std::is_nothrow_copy_constructible_v<Iter>)
+            {
                 return begin_;
             }
 
-            auto end() const {
+            constexpr auto end() const noexcept
+                (std::is_nothrow_copy_constructible_v<Iter>)
+            {
                 return end_;
             }
 
@@ -133,16 +205,26 @@ namespace zip_utils {
             Iter end_;
         };
 
+        template <typename T>
+        static constexpr bool is_nothrow_beg_end_copy_constructible_v = requires (T && arg) {
+            requires noexcept ( std::begin(std::forward<T>(arg)) );
+            requires noexcept ( std::end(std::forward<T>(arg)) );
+            requires std::is_nothrow_copy_constructible_v<
+                std::remove_cvref_t<decltype(std::begin(arg))>>;
+        };
+
     } // detail
 
     template <std::ranges::forward_range ... Containers>
-    auto zip(Containers && ... containers) {
+    constexpr auto zip(Containers && ... containers)
+        noexcept ((detail::is_nothrow_beg_end_copy_constructible_v<Containers> && ...))
+    {
         using namespace detail;
         return zip_impl{zip_iterator{std::begin(std::forward<Containers>(containers))...},
                         zip_iterator{std::end(std::forward<Containers>(containers))...}};
     }
 
-    inline auto operator""_sw(const char * str, std::size_t len) {
+    constexpr inline auto operator""_sw(const char * str, std::size_t len) {
         return std::string_view(str, len);
     }
 
@@ -155,26 +237,26 @@ namespace zip_utils {
             using iterator_category = std::forward_iterator_tag;
             using difference_type = int;
 
-            reference operator*() const {
+            constexpr reference operator*() const noexcept {
                 return index_;
             }
 
-            counting_iterator &operator++() {
+            constexpr counting_iterator & operator++() noexcept {
                 ++index_;
                 return *this;
             }
 
-            counting_iterator operator++(int) {
+            constexpr counting_iterator operator++(int) noexcept {
                 auto copy = *this;
                 ++*this;
                 return copy;
             }
 
-            bool operator==(counting_iterator const &) const {
+            constexpr bool operator==(counting_iterator const &) const noexcept {
                 return false;
             }
 
-            bool operator!=(counting_iterator const &) const {
+            constexpr bool operator!=(counting_iterator const &) const noexcept {
                 return true;
             }
 
@@ -185,11 +267,11 @@ namespace zip_utils {
         static constexpr counting_iterator end_count{};
 
         struct counter {
-            [[nodiscard]] counting_iterator begin() const {
+            [[nodiscard]] constexpr static counting_iterator begin() noexcept {
                 return counting_iterator{};
             }
 
-            [[nodiscard]] static counting_iterator end() {
+            [[nodiscard]] constexpr static counting_iterator end() noexcept {
                 return end_count;
             }
         };
@@ -200,13 +282,17 @@ namespace zip_utils {
     } // detail
 
     template <std::ranges::forward_range ... Containers>
-    auto enumerate(Containers && ... containers) {
+    constexpr auto enumerate(Containers && ... containers)
+        noexcept (noexcept(zip(std::forward<Containers>(containers) ...)))
+    {
         using namespace detail;
         return zip(counter{}, std::forward<Containers>(containers) ...);
     }
 
     template <typename T>
-    auto enumerate(std::initializer_list<T> && list) {
+    constexpr auto enumerate(std::initializer_list<T> && list)
+        noexcept (noexcept(enumerate(list)))
+    {
         return enumerate(list);
     }
 

@@ -3,9 +3,11 @@
 #include "zip_utils.hpp"
 
 #include <vector>
+#include <array>
 #include <sstream>
 #include <set>
 #include <map>
+#include <stdexcept>
 
 using namespace zip_utils;
 
@@ -46,7 +48,7 @@ TEST_CASE("References", "[zip]") {
         }                                     \
         value_changed = a[0].value != 0;      \
         REQUIRE((expects));                   \
-    } while (0, 0)
+    } while (0)
 
     REF_TEST_CASE(auto, copied && !moved && !value_changed);
     REF_TEST_CASE(auto &, !copied && !moved && value_changed);
@@ -74,7 +76,7 @@ TEST_CASE("Containers", "[zip]") {
     std::set s = {2, 3, 4};
     std::map<int, std::string> m = {{2, "x"}, {4, "y"}, {8, "no"}};
     for (auto [x, y, z] : zip(v, s, m)) {
-        REQUIRE((x + 1 == y && z.first == 1u << static_cast<unsigned>(x)));
+        REQUIRE((x + 1 == y && static_cast<unsigned>(z.first) == 1u << static_cast<unsigned>(x)));
     }
 }
 
@@ -149,7 +151,7 @@ TEST_CASE("Immutability", "[zip]") {
 
 TEST_CASE("Initializer list", "[enumerate]") {
     for (auto [i, x] : enumerate({1, 2, 3, 4, 5})) {
-        REQUIRE(i + 1 == x);
+        REQUIRE(static_cast<int>(i) + 1 == x);
     }
 }
 
@@ -195,7 +197,7 @@ TEST_CASE("Map", "[enumerate]") {
 TEST_CASE("Built-in", "[enumerate]") {
     std::vector<int> simple_array[] = {{2}, {4}, {8}, {16}};
     for (auto [i, x] : enumerate(simple_array)) {
-        REQUIRE(x[0] == 1 << i + 1);
+        REQUIRE(static_cast<unsigned>(x[0]) == 1u << (i + 1));
     }
 }
 
@@ -227,7 +229,6 @@ auto sub (arr_ref<T, N> a) -> arr_ref<T, N-S> {
     return reinterpret_cast<arr_ref<T, N-S>>(a[S]);
 }
 
-
 TEST_CASE("example") {
     int F[10] = {0, 1};
 
@@ -238,4 +239,63 @@ TEST_CASE("example") {
     for (auto [i, x] : enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34})) {
         REQUIRE(F[i] == x);
     }
+}
+
+TEST_CASE("Constexpr") {
+    constexpr auto sum = [] (const auto & array) -> int {
+        int sum = 0;
+        for (auto const & [x] : zip(array)) {
+            sum += x;
+        }
+        return sum;
+    };
+
+    constexpr int array[] = {1, 2, 3, 4, 5};
+    STATIC_REQUIRE(sum(array) == 15);
+
+    constexpr std::array<int, 5> stl_array = {1, 43, 7, 3, 7};
+    STATIC_REQUIRE(sum(stl_array) == 61);
+}
+
+TEST_CASE("Exceptions") {
+    std::initializer_list<int> list = {1, 2, 3, 4, 5};
+    std::vector<int> vec = {1, 2, 3, 4, 5};
+    STATIC_REQUIRE( noexcept(zip(list)) );
+    STATIC_REQUIRE( !noexcept(zip(vec)) );
+}
+
+TEST_CASE("Strong exception guarantee") {
+    struct It {
+        using value_type = int;
+        using reference = int &;
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = int;
+
+        It() = default;
+        explicit It(int x) : i{x} {}
+        It(It const &) = default;
+        It & operator++() { if (++i == 5) throw 0; return *this; }
+        It operator++(int) { It cp = *this; ++*this; return cp; }
+        reference operator*() const { return i; }
+        bool operator==(const It & o) const { return i == o.i; }
+        bool operator!=(const It & o) const { return i != o.i; }
+        mutable int i = 0;
+    };
+
+    struct S {
+        static auto begin() { return It(0); }
+        static auto end() { return It(10); }
+    };
+
+    int arr1[] = {3, 4, 5, 6, 7, 8, 9, 0, 1, 2};
+    int arr2[] = {0, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+    auto z = zip(arr1, S(), arr2);
+    auto beg = z.begin();
+
+    try {
+        while (true) { ++beg; }
+    } catch (int) { }
+
+    auto [x, y, w] = *beg;
+    REQUIRE(((x == 7) && (y == 4) && (w == 5)));
 }
