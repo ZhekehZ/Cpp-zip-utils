@@ -170,12 +170,22 @@ namespace zip_utils {
                 return iterator != other.iterator;
             }
 
+            template <std::size_t I>
+            constexpr void next(std::size_t val)
+                noexcept (noexcept(this->iterator.template next<I>(val)))
+            {
+                iterator.template next<I>(val);
+            }
+
         private:
 
             IterPack iterator;
         };
 
+
         static_assert(std::forward_iterator<zip_iterator<int *>>);
+
+        template <std::size_t I, std::size_t V> struct skip_{};
 
         template<std::forward_iterator ... Iterators>
         class zip_impl {
@@ -198,6 +208,14 @@ namespace zip_utils {
                 (std::is_nothrow_copy_constructible_v<Iter>)
             {
                 return end_;
+            }
+
+            template <std::size_t I, std::size_t V>
+            constexpr zip_impl & operator, (detail::skip_<I, V>)
+                noexcept (noexcept(this->begin_.template next<I>(V)))
+            {
+                begin_.template next<I>(V);
+                return *this;
             }
 
         private:
@@ -295,5 +313,9 @@ namespace zip_utils {
     {
         return enumerate(list);
     }
+
+
+    template <std::size_t I, std::size_t V>
+    static constexpr detail::skip_<I, V> skip = {};
 
 } // zip_utils

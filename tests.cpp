@@ -229,7 +229,7 @@ auto sub (arr_ref<T, N> a) -> arr_ref<T, N-S> {
     return reinterpret_cast<arr_ref<T, N-S>>(a[S]);
 }
 
-TEST_CASE("example") {
+TEST_CASE("Example") {
     int F[10] = {0, 1};
 
     for (auto & [x, y, z] : zip(F, sub<1>(F), sub<2>(F))) {
@@ -298,4 +298,21 @@ TEST_CASE("Strong exception guarantee") {
 
     auto [x, y, w] = *beg;
     REQUIRE(((x == 7) && (y == 4) && (w == 5)));
+}
+
+TEST_CASE("Skip") {
+    std::array<int, 10> F = {0, 1};
+
+    for (auto & [F0, F1, F2] : zip(F, F, F), skip<1, 1>, skip<2, 2>) {
+        F2 = F0 + F1;
+    }
+
+    for (auto [i, x] : enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34})) {
+        REQUIRE(F[i] == x);
+    }
+
+    std::vector v = {1, 2, 3, 4, 5};
+    for (auto [x, y] : zip(v, v), skip<1, 1>) {
+        REQUIRE(x + 1 == y);
+    }
 }

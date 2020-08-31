@@ -16,34 +16,28 @@ auto enumerate(Containers && ... containers);
 ---
 #### Usage:
 ```c++
+#include <cassert>
+
 #include "zip_utils.hpp"
 using namespace zip_utils;
 /*  or
     using zip_utils::zip;
     using zip_utils::enumerate;
+    using zip_utils::skip;
     using zip_utils::operator""_sw;
 */
-template <typename T, std::size_t N>
-using arr_ref = T (&)[N];
 
-template <std::size_t S, typename T, std::size_t N>
-auto sub (arr_ref<T, N> a) -> arr_ref<T, N-S> {
-    return reinterpret_cast<arr_ref<T, N-S>>(a[S]);
-} // returns reference to built-in array's tail
+void test_10_fibonacci() {    
+    std::array<int, 10> F = {0, 1};
 
-template <std::size_t N>
-void build_and_print_fibonacci() {
-    int F[N] = {0, 1};
-
-    for (auto & [x, y, z] : zip(F, sub<1>(F), sub<2>(F))) {     // <-- zip
-        z = x + y;
+    for (auto & [F0, F1, F2] : zip(F, F, F), skip<1, 1>, skip<2, 2>) {
+        F2 = F0 + F1;
     }
-    
-    for (auto x : F) {
-        std::cout << x << ' '; // 0 1 1 2 3 5 8 13 ...
+
+    for (auto [i, x] : enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34})) {
+        assert(F[i] == x);
     }
 }
-
 ```
 ---
 #### Features:
@@ -79,13 +73,33 @@ void build_and_print_fibonacci() {
         //    to avoid terminating zero: 
         for (auto const & [x] : zip("abc"_sw)) { /* x in [a b c] */ }
         ```
-    - Zip result is also forward_iterable
+    - Zip result is also `forward_range`
         ```c++
         std::vector<int> v(0);
       
         for (auto [y, x] : zip(zip(v, v), v)) {
             auto [t, w] = y;     
             /* */
+        }
+        ```
+    - Constexpr
+        ```c++
+        constexpr auto sum = [] (const auto & array) -> int {
+            int sum = 0;
+            for (auto const & [x] : zip(array)) sum += x;  
+            return sum;
+        };
+      
+        constexpr std::array<int, 5> arr = {1, 43, 7, 3, 7};
+        static_assert(sum(arr) == 61);
+        ```
+    - Skip
+        ```c++
+        std::vector v = {1, 2, 3, 4, 5};
+        for (auto [x, y] : zip(v, v), skip<0, 1>) {
+            // skip<i, j> skips j iterations of the i-th iterator
+            // x == 2, 3, 4, 5
+            // y == 1, 2, 3, 4, 5
         }
         ```
       
