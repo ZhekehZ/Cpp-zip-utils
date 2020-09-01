@@ -1,10 +1,9 @@
 language: cpp
 
-dist: bionic
-
 jobs:
   include:
     - os: linux
+      dist: bionic
       compiler: gcc
       addons:
         apt:
@@ -14,19 +13,21 @@ jobs:
             - gcc-10
             - g++-10
       before_install: export CXX=g++-10
-      script:
-        - cmake --version
-        - mkdir build
-        - cd build
-        - cmake ..
-        - cmake --build . --config Debug
-        - ctest -C Debug
+      env:
+        GENERATOR="Unix Makefile"
 
     - os: windows
-      script:
-        - cmake --version
-        - mkdir build
-        - cd build
-        - cmake .. -G "Visual Studio 16 2019" -A x64
-        - cmake --build . --config Debug
-        - ctest -C Debug
+      compiler: msvc19
+      before_install:
+        - choco install visualstudio2019buildtools --package-parameters "--includeRecommended --includeOptional"
+        - choco install visualstudio2019-workload-vctools
+      env:
+        GENERATOR="Visual Studio 16 2019"
+
+script:
+  - cmake --version
+  - mkdir build
+  - cd build
+  - cmake ..
+  - cmake --build . --config Debug
+  - ctest -C Debug
