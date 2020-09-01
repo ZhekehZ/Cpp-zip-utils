@@ -2,22 +2,20 @@ language: cpp
 
 dist: bionic
 
-os:
-  - linux
+jobs:
+  include:
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-10
+            - g++-10
+      before_install: export CXX=g++-10
 
-compiler:
-  - gcc
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - gcc-10
-      - g++-10
-
-before_install:
-  - export CXX=g++-10
+    - os: windows
 
 script:
   - cmake --version
