@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.12.4)
 
 include(CTest)
 
-if (UNIX)
-    set(CMAKE_CXX_COMPILER g++-10)
-endif()
-
 add_executable(zip_utils_all_tests)
 
 target_sources(zip_utils_all_tests PRIVATE tests.cpp)

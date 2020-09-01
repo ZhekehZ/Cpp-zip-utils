@@ -4,7 +4,8 @@ jobs:
   include:
     - os: linux
       dist: bionic
-      compiler: gcc
+      compiler:
+        - gcc
       addons:
         apt:
           sources:
@@ -13,16 +14,18 @@ jobs:
             - gcc-10
             - g++-10
       before_install: export CXX=g++-10
-      env:
-        GENERATOR="Unix Makefile"
 
-    - os: windows
-      compiler: msvc19
-      before_install:
-        - choco install visualstudio2019buildtools --package-parameters "--includeRecommended --includeOptional"
-        - choco install visualstudio2019-workload-vctools
-      env:
-        GENERATOR="Visual Studio 16 2019"
+    - os: linux
+      dist: bionic
+      compiler:
+        - clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-10
+      before_install: export CXX=clang++-10
 
 script:
   - cmake --version
