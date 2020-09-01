@@ -14,13 +14,19 @@ jobs:
             - gcc-10
             - g++-10
       before_install: export CXX=g++-10
+      script:
+        - cmake --version
+        - mkdir build
+        - cd build
+        - cmake ..
+        - cmake --build . --config Debug
+        - ctest -C Debug
 
     - os: windows
-
-script:
-  - cmake --version
-  - mkdir build
-  - cd build
-  - cmake ..
-  - cmake --build . --config Debug
-  - ctest -C Debug
+      script:
+        - cmake --version
+        - mkdir build
+        - cd build
+        - cmake .. -G "Visual Studio 16 2019" -A x64
+        - cmake --build . --config Debug
+        - ctest -C Debug
