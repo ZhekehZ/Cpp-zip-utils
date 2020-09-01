@@ -1,9 +1,13 @@
 language: cpp
+
+dist: bionic
+
 os:
   - linux
-dist: bionic
+
 compiler:
   - gcc
+
 addons:
   apt:
     sources:
@@ -11,9 +15,14 @@ addons:
     packages:
       - gcc-10
       - g++-10
+
 before_install:
   - export CXX=g++-10
+
 script:
-  - cmake .
-  - make
-  - ./tests
+  - cmake --version
+  - mkdir build
+  - cd build
+  - cmake ..
+  - cmake --build . --config Debug -- -j $(nproc)
+  - ctest -C Debug

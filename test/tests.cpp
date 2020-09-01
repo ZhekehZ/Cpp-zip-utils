@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
-#include "catch/catch.hpp"
-#include "zip_utils.hpp"
+#include "include/catch.hpp"
+#include "../include/zip_utils/zip_utils.hpp"
 
 #include <vector>
 #include <array>
