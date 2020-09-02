@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
-#include "catch/catch.hpp"
-#include "zip_utils.hpp"
+#include <catch.hpp>
+#include <zip_utils/zip_utils.hpp>
 
 #include <vector>
 #include <array>
@@ -119,15 +119,7 @@ TEST_CASE("Immutability", "[zip]") {
         STATIC_REQUIRE(!std::is_const_v<decltype(x)>);
     }
 
-    for (auto const [x] : zip(v)) {
-        STATIC_REQUIRE(std::is_const_v<decltype(x)>);
-    }
-
     for (auto [x] : zip(std::as_const(v))) {
-        STATIC_REQUIRE(std::is_const_v<decltype(x)>);
-    }
-
-    for (auto const [x] : zip(std::as_const(v))) {
         STATIC_REQUIRE(std::is_const_v<decltype(x)>);
     }
 
@@ -167,7 +159,7 @@ TEST_CASE("Vector", "[enumerate]") {
 }
 
 TEST_CASE("Set", "[enumerate]") {
-    std::set s = {"a", "b", "c", "d", "e"};
+    std::set s = {'a', 'b', 'c', 'd', 'e'};
     std::stringstream ss;
 
     for (auto [i, x] : enumerate(s)) {
