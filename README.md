@@ -56,7 +56,7 @@ void test_10_fibonacci() {
         std::vector<int> v = { /* */ };
         std::vector<int> v_half(v.size() / 2); 
       
-        for (auto & [x, y] : zip(v, v_half) {
+        for (auto & [x, y] : zip(v, v_half)) {
             y = x;
         }
         ```
