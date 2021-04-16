@@ -30,9 +30,4 @@ jobs:
       before_install: export CXX=clang++-10
 
 script:
-  - cmake --version
-  - mkdir build
-  - cd build
-  - cmake ..
-  - cmake --build . --config Debug
-  - ctest -C Debug
+  - ./build_test.sh
