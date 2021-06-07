@@ -185,8 +185,6 @@ namespace zip_utils {
 
         static_assert(std::forward_iterator<zip_iterator<int *>>);
 
-        template <std::size_t I, std::size_t V> struct skip_{};
-
         template<std::forward_iterator ... Iterators>
         class zip_impl {
             static_assert(sizeof...(Iterators) > 0, "AT_LEAST_ONE_ARGUMENT_NEEDED");
@@ -210,11 +208,9 @@ namespace zip_utils {
                 return end_;
             }
 
-            template <std::size_t I, std::size_t V>
-            constexpr zip_impl & operator, (detail::skip_<I, V>)
-                noexcept (noexcept(this->begin_.template next<I>(V)))
-            {
-                begin_.template next<I>(V);
+            template<std::size_t I>
+            constexpr zip_impl & skip(std::size_t v) {
+                begin_.template next<I>(v);
                 return *this;
             }
 
@@ -313,9 +309,5 @@ namespace zip_utils {
     {
         return enumerate(list);
     }
-
-
-    template <std::size_t I, std::size_t V>
-    static constexpr detail::skip_<I, V> skip = {};
 
 } // zip_utils

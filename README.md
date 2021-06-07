@@ -30,11 +30,14 @@ using namespace zip_utils;
 void test_10_fibonacci() {    
     std::array<int, 10> F = {0, 1};
 
-    for (auto & [F0, F1, F2] : zip(F, F, F), skip<1, 1>, skip<2, 2>) {
+    auto fibs_iterator = zip(F, F, F).skip<1>(1).skip<2>(2);
+    auto expected = enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34});
+    
+    for (auto & [F0, F1, F2] : fibs_iterator) {
         F2 = F0 + F1;
     }
 
-    for (auto [i, x] : enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34})) {
+    for (auto [i, x] : expected) {
         assert(F[i] == x);
     }
 }
@@ -47,7 +50,8 @@ void test_10_fibonacci() {
         std::vector<int> v = { /* */ };
         std::set<char>   s = { /* */ };
         
-        for (auto const & [x, y] : zip(v, s)) { 
+        auto zipped = zip(v, s);
+        for (auto const & [x, y] : zipped) { 
             std::cout << "x = " << x << ", y = " << y << std::endl; 
         }
         ```
@@ -56,7 +60,8 @@ void test_10_fibonacci() {
         std::vector<int> v = { /* */ };
         std::vector<int> v_half(v.size() / 2); 
       
-        for (auto & [x, y] : zip(v, v_half)) {
+        auto zipped = zip(v, v_half);
+        for (auto & [x, y] : zipped) {
             y = x;
         }
         ```
@@ -65,19 +70,22 @@ void test_10_fibonacci() {
         int a[4] = {0};
         auto s = "hello, world";
       
-        for (auto [x, y] : zip(a, s)) {
+        auto zipped = zip(a, s);
+        for (auto [x, y] : zipped) {
             std::cout << y;  
         }
       
         // Note: you can use `_sw` suffix (sw stands for std::string_view) for c-strings 
-        //    to avoid terminating zero: 
-        for (auto const & [x] : zip("abc"_sw)) { /* x in [a b c] */ }
+        //    to avoid terminating zero:
+        auto zipped = zip("abc"_sw); 
+        for (auto const & [x] : zipped) { /* x in [a b c] */ }
         ```
     - Zip result is also `forward_range`
         ```c++
         std::vector<int> v(0);
       
-        for (auto [y, x] : zip(zip(v, v), v)) {
+        auto zipped = zip(zip(v, v), v);
+        for (auto [y, x] : zipped) {
             auto [t, w] = y;     
             /* */
         }
@@ -86,7 +94,9 @@ void test_10_fibonacci() {
         ```c++
         constexpr auto sum = [] (const auto & array) -> int {
             int sum = 0;
-            for (auto const & [x] : zip(array)) sum += x;  
+      
+            auto zipped = zip(array);
+            for (auto const & [x] : zipped) sum += x;  
             return sum;
         };
       
@@ -96,7 +106,9 @@ void test_10_fibonacci() {
     - Skip
         ```c++
         std::vector v = {1, 2, 3, 4, 5};
-        for (auto [x, y] : zip(v, v), skip<0, 1>) {
+      
+        auto zipped = zip(v, v).skip<0>(1);
+        for (auto [x, y] : zipped) {
             // skip<i, j> skips j iterations of the i-th iterator
             // x == 2, 3, 4, 5
             // y == 1, 2, 3, 4, 5
@@ -108,13 +120,15 @@ void test_10_fibonacci() {
         ```c++
         std::vector<int> v = { /* */ };
       
-        for (auto [i, x] : enumerate(v)) {
+        auto enumeration = enumerate(v);
+        for (auto [i, x] : enumeration) {
             std::cout << "v[" << i << "] == " << x << std::endl;
         }
         ```
     - Initializer list
         ```c++
-        for (auto [i, x] : enumerate({0, 1, 2, 3, 4, 5})) {
+        auto enumeration = enumerate({0, 1, 2, 3, 4, 5});
+        for (auto [i, x] : enumeration) {
             assert(i == x);
         }
         ```
