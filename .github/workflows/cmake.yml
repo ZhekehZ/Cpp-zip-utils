@@ -52,7 +52,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: |
         export CXX=clang++-10
-        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        cmake --build . --config ${{env.BUILD_TYPE}}
 
     - name: Test
       working-directory: ${{github.workspace}}/build
@@ -60,5 +60,5 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         export CXX=clang++-10
-        ctest -C ${{env.BUILD_TYPE}}
+        ctest --output-on-failure -C ${{env.BUILD_TYPE}}
       
