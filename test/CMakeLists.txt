@@ -25,7 +25,7 @@ if(MSVC)
     target_compile_options(zip_utils_all_tests PRIVATE /WX)
 else()
     target_compile_options(zip_utils_all_tests PRIVATE -Wall)
-    target_compile_options(zip_utils_all_tests PRIVATE -Werror)
+    target_compile_options(zip_utils_all_tests PRIVATE -Werror -Wno-error=uninitialized)
     target_compile_options(zip_utils_all_tests PRIVATE -Wpedantic)
 endif()
 
