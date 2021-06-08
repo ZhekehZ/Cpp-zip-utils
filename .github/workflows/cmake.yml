@@ -33,6 +33,7 @@ jobs:
       run: |
           sudo apt-get install gcc-10 g++-10
           export CXX=g++-10
+          $CXX --version
           
     - name: Run conan
       working-directory: ${{github.workspace}}/build
