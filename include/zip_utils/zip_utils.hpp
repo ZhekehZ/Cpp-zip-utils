@@ -39,19 +39,22 @@ namespace zip_utils::detail {
         [[nodiscard]] constexpr const auto & get() const &
             noexcept (nothrow_deref_tuple_element<const base, I>)
         {
-            return *std::get<I>(static_cast<base>(*this));
+            const auto & self = static_cast<const base&>(*this);
+            return *std::get<I>(self);
         }
 
         template <std::size_t I>
-        constexpr auto get() &&  noexcept (nothrow_deref_tuple_element<base, I>) {
-            return *std::get<I>(static_cast<base>(*this));
+        constexpr auto get() && noexcept (nothrow_deref_tuple_element<base, I>) {
+            auto & self = static_cast<base&>(*this);
+            return *std::get<I>(self);
         }
 
         template <std::size_t I>
         [[nodiscard]] constexpr auto get() const &&
             noexcept (nothrow_deref_tuple_element<const base, I>)
         {
-            return *std::get<I>(static_cast<base>(*this));
+            const auto & self = static_cast<const base&>(*this);
+            return *std::get<I>(self);
         }
 
         constexpr bool operator==(iterator_pack const & other) const
