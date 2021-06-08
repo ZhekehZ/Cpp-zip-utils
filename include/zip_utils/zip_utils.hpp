@@ -145,7 +145,7 @@ namespace zip_utils {
                 return const_cast<reference>(iterator);
             }
 
-            constexpr zip_iterator & operator++() noexcept (noexcept(this->iterator.inc())) {
+            constexpr zip_iterator & operator++() {
                 iterator.inc();
                 return *this;
             }

@@ -154,7 +154,7 @@ TEST_CASE("Immutability", "[zip]") {
 TEST_CASE("Initializer list", "[enumerate]") {
     auto enumeration = enumerate({1, 2, 3, 4, 5});
     for (auto [i, x] : enumeration) {
-        REQUIRE(static_cast<int>(i) + 1 == x);
+        REQUIRE(i + 1 == x);
     }
 }
 
@@ -217,7 +217,7 @@ TEST_CASE("Enumerate stress <kek>", "[enumerate]") {
     std::default_random_engine mt(rd());
     std::uniform_real_distribution<double> dist(1.0, 100.0);
 
-    for (auto i = 0ul; i < 1e5; ++i) {
+    for (auto i = 0ul; i < 1e5l; ++i) {
         v.push_back(static_cast<int>(dist(mt)));
         ss_expected << "x[" << i << "]=" << v.back() << " ";
     }
@@ -242,7 +242,7 @@ TEST_CASE("Example") {
     int F[10] = {0, 1};
     auto expected = enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34});
 
-    auto fib_iter = zip(F, sub<1>(F), sub<2>(F));
+    auto fib_iter = zip(F,F,F).skip<1>(1).skip<2>(2);
     for (auto & [x, y, z] : fib_iter) {
         z = x + y;
     }
