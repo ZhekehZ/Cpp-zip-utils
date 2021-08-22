@@ -1,4 +1,4 @@
-# Cpp-zip-utils [![Build Status](https://travis-ci.com/ZhekehZ/Cpp-zip-utils.svg?branch=master)](https://travis-ci.com/ZhekehZ/Cpp-zip-utils)
+# Cpp-zip-utils [![CMake](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml/badge.svg)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml)
 #### _Some structured_binding-friendly functions for `C+-`_
 
 ---
