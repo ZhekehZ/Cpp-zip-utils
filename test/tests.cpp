@@ -5,11 +5,12 @@
 #include <vector>
 #include <array>
 #include <sstream>
-#include <set>
 #include <map>
 #include <stdexcept>
+#include <string_view>
 
 using namespace zip_utils;
+using namespace std::literals;
 
 TEST_CASE("References", "[zip]") {
     static bool copied = false;
@@ -43,8 +44,7 @@ TEST_CASE("References", "[zip]") {
         copied = false;                       \
         moved = false;                        \
         a[0].value = 0;                       \
-        auto zipped = zip(a, b);              \
-        for (test [x, y] : zipped) {          \
+        for (test [x, y] : zip(a, b)) {       \
             x.value = 3;                      \
         }                                     \
         value_changed = a[0].value != 0;      \
@@ -57,16 +57,15 @@ TEST_CASE("References", "[zip]") {
 }
 
 TEST_CASE("Modification", "[zip]") {
-    std::vector v = {1, 2, 3, 4, 5};
-    std::vector u = {'x', 'y', 'z'};
+    std::vector u = {1, 2, 3, 4, 5};
+    std::vector v = {'x', 'y', 'z'};
 
-    auto zipped = zip(u, v);
-    for (auto [x, y] : zipped) {
+    for (auto [x, y] : zip(u, v)) {
         x = y;
     }
     REQUIRE((v[0] != u[0] && v[1] != u[1] && v[2] != u[2]));
 
-    for (auto & [x, y] : zipped) {
+    for (auto & [x, y] : zip(u, v)) {
         x = y;
     }
     REQUIRE((v[0] == u[0] && v[1] == u[1] && v[2] == u[2]));
@@ -77,18 +76,16 @@ TEST_CASE("Containers", "[zip]") {
     std::set s = {2, 3, 4};
     std::map<int, std::string> m = {{2, "x"}, {4, "y"}, {8, "no"}};
 
-    auto zipped = zip(v, s, m);
-    for (auto [x, y, z] : zipped) {
+    for (auto [x, y, z] : zip(v, s, m)) {
         REQUIRE((x + 1 == y && static_cast<unsigned>(z.first) == 1u << static_cast<unsigned>(x)));
     }
 }
 
 TEST_CASE("Built-in arrays", "[zip]") {
-    int a[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 1000};
-    char b[] = {5, 4, 3, 2, 1};
+    int A[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 1000};
+    char B[] = {5, 4, 3, 2, 1};
 
-    auto zipped = zip(a, b);
-    for (auto & [a, b] : zipped) {
+    for (auto & [a, b] : zip(A, B)) {
         REQUIRE(a == 6 - b);
     }
 }
@@ -96,8 +93,9 @@ TEST_CASE("Built-in arrays", "[zip]") {
 TEST_CASE("C-string", "[zip]") {
     std::stringstream ss;
 
-    auto zipped = zip("hello, world! ;)"_sw, "...."_sw);
-    for (auto [x, y] : zipped) {
+    auto message1 = "hello, world! ;)"sv;
+    auto message2 = "...."sv;
+    for (auto [x, y] : zip(message1, message2)) {
         ss << x << y;
     }
     REQUIRE(ss.str() == "h.e.l.l.");
@@ -110,8 +108,7 @@ TEST_CASE("Zip as argument", "[zip]") {
 
     std::stringstream ss;
 
-    auto zipped = zip(z, z);
-    for (auto [x, y] : zipped) {
+    for (auto [x, y] : zip(z, z)) {
         auto [a, b] = x;
         auto [c, d] = y;
         ss << a << ' ' << b << ' ' << c << ' ' << d << std::endl;
@@ -123,37 +120,35 @@ TEST_CASE("Zip as argument", "[zip]") {
 TEST_CASE("Immutability", "[zip]") {
     std::vector<int> v;
 
-    auto zipped = zip(v);
-    for (auto [x] : zipped) {
+    for (auto [x] : zip(v)) {
         STATIC_REQUIRE(!std::is_const_v<decltype(x)>);
     }
 
-    auto zipped_const = zip(std::as_const(v));
-    for (auto [x] : zipped_const) {
+    for (auto [x] : zip(std::as_const(v))) {
         STATIC_REQUIRE(std::is_const_v<decltype(x)>);
     }
 
-    for (auto & [x] : zipped) {
+    for (auto & [x] : zip(v)) {
         STATIC_REQUIRE(!std::is_const_v<decltype(x)>);
     }
 
-    for (auto const & [x] : zipped) {
+    for (auto const & [x] : zip(v)) {
         STATIC_REQUIRE(std::is_const_v<decltype(x)>);
     }
 
-    for (auto & [x] : zipped_const) {
+    for (auto & [x] : zip(std::as_const(v))) {
         STATIC_REQUIRE(std::is_const_v<decltype(x)>);
     }
 
-    for (auto const & [x] : zipped_const) {
+    for (auto const & [x] : zip(std::as_const(v))) {
         STATIC_REQUIRE(std::is_const_v<decltype(x)>);
     }
 
 }
 
 TEST_CASE("Initializer list", "[enumerate]") {
-    auto enumeration = enumerate({1, 2, 3, 4, 5});
-    for (auto [i, x] : enumeration) {
+    auto numbers = {1u, 2u, 3u, 4u, 5u};
+    for (auto [i, x] : enumerate(numbers)) {
         REQUIRE(i + 1 == x);
     }
 }
@@ -192,8 +187,7 @@ TEST_CASE("Map", "[enumerate]") {
     };
     std::stringstream ss;
 
-    auto enumeration = enumerate(m);
-    for (auto [i, x] : enumeration) {
+    for (auto [i, x] : enumerate(m)) {
         ss << i << ' ' << x.first << ',' << x.second << ' ';
     }
 
@@ -203,8 +197,7 @@ TEST_CASE("Map", "[enumerate]") {
 TEST_CASE("Built-in", "[enumerate]") {
     std::vector<int> simple_array[] = {{2}, {4}, {8}, {16}};
 
-    auto enumeration = enumerate(simple_array);
-    for (auto [i, x] : enumeration) {
+    for (auto [i, x] : enumerate(simple_array)) {
         REQUIRE(static_cast<unsigned>(x[0]) == 1u << (i + 1));
     }
 }
@@ -222,8 +215,7 @@ TEST_CASE("Enumerate stress <kek>", "[enumerate]") {
         ss_expected << "x[" << i << "]=" << v.back() << " ";
     }
 
-    auto enumeration = enumerate(v);
-    for (auto [i, x] : enumeration) {
+    for (auto [i, x] : enumerate(v)) {
         ss_enumerate << "x[" << i << "]=" << x << " ";
     }
 
@@ -240,14 +232,13 @@ auto sub (arr_ref<T, N> a) -> arr_ref<T, N-S> {
 
 TEST_CASE("Example") {
     int F[10] = {0, 1};
-    auto expected = enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34});
+    auto expected = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
 
-    auto fib_iter = zip(F,F,F).skip<1>(1).skip<2>(2);
-    for (auto & [x, y, z] : fib_iter) {
+    for (auto & [x, y, z] : zip(F,F,F).skip<1>(1).skip<2>(2)) {
         z = x + y;
     }
 
-    for (auto [i, x] : expected) {
+    for (auto [i, x] : enumerate(expected)) {
         REQUIRE(F[i] == x);
     }
 }
@@ -256,13 +247,12 @@ TEST_CASE("Example") {
 
 TEST_CASE("Constexpr") {
     constexpr auto sum = [](const auto& array) -> int {
-        int sum = 0;
+        int result = 0;
 
-        auto zipped = zip(array);
-        for (auto const & [x] : zipped) {
-            sum += x;
+        for (auto const & [x] : zip(array)) {
+            result += x;
         }
-        return sum;
+        return result;
     };
 
     constexpr int array[] = {1, 2, 3, 4, 5};
@@ -300,11 +290,11 @@ TEST_CASE("Strong exception guarantee") {
     struct S {
         static auto begin() { return It(0); }
         static auto end() { return It(10); }
-    };
+    } s;
 
     int arr1[] = {3, 4, 5, 6, 7, 8, 9, 0, 1, 2};
     int arr2[] = {0, 8, 7, 6, 5, 4, 3, 2, 1, 0};
-    auto z = zip(arr1, S(), arr2);
+    auto z = zip(arr1, s, arr2);
     auto beg = z.begin();
 
     try {
@@ -318,22 +308,18 @@ TEST_CASE("Strong exception guarantee") {
 TEST_CASE("Skip") {
     std::array<int, 10> F = {0, 1};
 
-    auto zipped = zip(F, F, F)
-                    .skip<1>(1)
-                    .skip<2>(2);
-    for (auto & [F0, F1, F2] : zipped) {
+    for (auto & [F0, F1, F2] : zip(F, F, F).skip<1>(1).skip<2>(2)) {
         F2 = F0 + F1;
     }
 
-    auto enumeration = enumerate({0, 1, 1, 2, 3, 5, 8, 13, 21, 34});
-    for (auto [i, x] : enumeration) {
+    auto expected = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
+    for (auto [i, x] : enumerate(expected)) {
         REQUIRE(F[i] == x);
     }
 
     std::vector v = {1, 2, 3, 4, 5};
 
-    auto zipped2 = zip(v, v).skip<1>(1);
-    for (auto [x, y] : zipped2) {
+    for (auto [x, y] : zip(v, v).skip<1>(1)) {
         REQUIRE(x + 1 == y);
     }
 }
