@@ -1,4 +1,6 @@
-# Cpp-zip-utils [![CMake](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml/badge.svg)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml) [![CodeQL](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml/badge.svg?branch=other_add_code_analysis)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml)
+# Cpp-zip-utils   
+[![CMake](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml/badge.svg)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml)  
+[![CodeQL](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml)
 #### _Some structured_binding-friendly functions for `C+-`_
 
 ---
