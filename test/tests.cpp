@@ -376,6 +376,18 @@ TEST_CASE("Rvalue-array") {
         REQUIRE(i == x);
         REQUIRE(i == y);
     }
+
+    size_t i = 0;
+    for (auto x : zip(zip(array, array), zip(array, array))) {
+        auto [ab, cd] = x;
+        auto [a, b] = ab;
+        auto [c, d] = cd;
+        REQUIRE(i == a);
+        REQUIRE(i == b);
+        REQUIRE(i == c);
+        REQUIRE(i == d);
+        ++i;
+    }
 }
 
 TEST_CASE("Rvalue no default constructor") {
