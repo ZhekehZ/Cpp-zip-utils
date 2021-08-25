@@ -12,19 +12,11 @@ namespace zip_utils {
 		using namespace detail::impl;
 		using namespace detail::parameter_pack_utils;
 
-		// TODO Rework decomposition
-		using Rvalues = map<wrap<std::optional>::impl,
-							map<std::decay,
-								filter<std::is_rvalue_reference, Containers&&...>>>;
-		using RvalueIndicesT = filter_indices<std::is_rvalue_reference, Containers&&...>;
-
-		if constexpr (is_empty<Rvalues>) {
-			return zip_impl{ zip_iterator{ std::begin(containers)...},
-							 zip_iterator{ std::end(containers)...  } };
+		if constexpr (at_least_one_is<std::is_rvalue_reference, Containers&&...>) {
+			return make_zip_impl_with_rvalue_collections(std::forward<Containers>(containers)...);
 		}
 		else {
-			return make_zip_impl_with_rvalue_collections<Rvalues, RvalueIndicesT>(
-				std::forward<Containers>(containers)...);
+			return make_zip_impl(std::forward<Containers>(containers)...);
 		}
 	}
 

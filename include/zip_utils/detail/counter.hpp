@@ -6,6 +6,9 @@ namespace zip_utils::detail::counter {
 
 	class counting_iterator {
 	public:
+		constexpr counting_iterator()
+			: index_(0){};
+
 		using value_type = const std::size_t;
 		using reference = value_type&;
 		using iterator_category = std::forward_iterator_tag;

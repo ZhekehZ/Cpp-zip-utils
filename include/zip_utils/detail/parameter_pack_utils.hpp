@@ -74,8 +74,8 @@ namespace zip_utils::detail::parameter_pack_utils {
 	template<template<typename> typename Func, typename Tuple>
 	using map = typename map_impl<Func, Tuple>::type;
 
-	template<typename Tuple>
-	bool constexpr is_empty = std::tuple_size<Tuple>::value == 0;
+	template<template<typename> typename Criteria, typename... Args>
+	bool constexpr at_least_one_is = (Criteria<Args>::value || ... || false);
 
 	template<size_t Idx, size_t... Indices>
 	constexpr size_t count_less_than = ((Indices < Idx ? 1 : 0) + ... + 0);
