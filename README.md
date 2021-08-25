@@ -1,4 +1,5 @@
 ## Cpp-zip-utils ##
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/07402ef857b642e399f2e783ecaa3218)](https://app.codacy.com/gh/ZhekehZ/Cpp-zip-utils?utm_source=github.com&utm_medium=referral&utm_content=ZhekehZ/Cpp-zip-utils&utm_campaign=Badge_Grade_Settings)
 [![CMake](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml) [![CodeQL](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml) [![Codacy Security Scan](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codacy-analysis.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codacy-analysis.yml)  
 _Some structured_binding-friendly functions for `C+-`_
 
