@@ -42,21 +42,36 @@ TEST_CASE("References", "[zip]") {
     A a[] = {{}};
     int b[] = {0};
 
-#define REF_TEST_CASE(test, expects)     \
-    do {                                 \
-        copied = false;                  \
-        moved = false;                   \
-        a[0].value = 0;                  \
-        for (test[x, y] : zip(a, b)) {   \
-            x.value = 3;                 \
-        }                                \
-        value_changed = a[0].value != 0; \
-        REQUIRE((expects));              \
-    } while (0)
-
-    REF_TEST_CASE(auto, copied && !moved && !value_changed);
-    REF_TEST_CASE(auto&, !copied && !moved && value_changed);
-    REF_TEST_CASE(auto&&, !copied && !moved && value_changed);
+    {
+        copied = false;
+        moved = false;
+        a[0].value = 0;
+        for (auto [x, y] : zip(a, b)) {
+            x.value = 3;
+        }
+        value_changed = a[0].value != 0;
+        REQUIRE((copied && !moved && !value_changed));
+    }
+    {
+        copied = false;
+        moved = false;
+        a[0].value = 0;
+        for (auto& [x, y] : zip(a, b)) {
+            x.value = 3;
+        }
+        value_changed = a[0].value != 0;
+        REQUIRE((!copied && !moved && value_changed));
+    }
+    {
+        copied = false;
+        moved = false;
+        a[0].value = 0;
+        for (auto&& [x, y] : zip(a, b)) {
+            x.value = 3;
+        }
+        value_changed = a[0].value != 0;
+        REQUIRE((!copied && !moved && value_changed));
+    }
 }
 
 TEST_CASE("Modification", "[zip]") {
@@ -278,7 +293,7 @@ TEST_CASE("Strong exception guarantee") {
 
         It() = default;
         explicit It(int x)
-            : i{x} {
+        : i{x} {
         }
         It(It const&) = default;
         It& operator++() {
@@ -357,8 +372,7 @@ TEST_CASE("Rvalue") {
 
 TEST_CASE("Rvalue-array") {
     size_t array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-    for (auto [i, x, y] : enumerate(std::vector<size_t>{0, 1, 2, 3, 4, 5, 6, 7, 8},
-                                    array)) {
+    for (auto [i, x, y] : enumerate(std::vector<size_t>{0, 1, 2, 3, 4, 5, 6, 7, 8}, array)) {
         REQUIRE(i == x);
         REQUIRE(i == y);
     }
@@ -367,9 +381,7 @@ TEST_CASE("Rvalue-array") {
 TEST_CASE("Rvalue no default constructor") {
     struct A : public std::vector<int> {
         A() = delete;
-        explicit A(int)
-            : std::vector<int>(0) {
-        }
+        explicit A(int) : std::vector<int>(0) {}
     };
 
     A arr(0);
