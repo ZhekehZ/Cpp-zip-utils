@@ -1,13 +1,14 @@
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
 #include <zip_utils/zip_utils.hpp>
 
-#include <vector>
+#include <catch.hpp>
+
 #include <array>
-#include <sstream>
 #include <map>
+#include <set>
+#include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <vector>
 
 using namespace zip_utils;
 using namespace std::literals;
@@ -19,17 +20,18 @@ TEST_CASE("References", "[zip]") {
 
     struct A {
         A() = default;
-        A(const A &) {
+        A(const A&) {
             copied = true;
         }
-        A(A &&) noexcept {
+        A(A&&)
+        noexcept {
             moved = true;
         }
-        A & operator=(const A &) {
+        A& operator=(const A&) {
             copied = true;
             return *this;
         }
-        A & operator=(A &&) noexcept {
+        A& operator=(A&&) noexcept {
             moved = true;
             return *this;
         }
@@ -40,20 +42,21 @@ TEST_CASE("References", "[zip]") {
     A a[] = {{}};
     int b[] = {0};
 
-    #define REF_TEST_CASE(test, expects) do { \
-        copied = false;                       \
-        moved = false;                        \
-        a[0].value = 0;                       \
-        for (test [x, y] : zip(a, b)) {       \
-            x.value = 3;                      \
-        }                                     \
-        value_changed = a[0].value != 0;      \
-        REQUIRE((expects));                   \
+#define REF_TEST_CASE(test, expects)     \
+    do {                                 \
+        copied = false;                  \
+        moved = false;                   \
+        a[0].value = 0;                  \
+        for (test[x, y] : zip(a, b)) {   \
+            x.value = 3;                 \
+        }                                \
+        value_changed = a[0].value != 0; \
+        REQUIRE((expects));              \
     } while (0)
 
     REF_TEST_CASE(auto, copied && !moved && !value_changed);
-    REF_TEST_CASE(auto &, !copied && !moved && value_changed);
-    REF_TEST_CASE(auto &&, !copied && !moved && value_changed);
+    REF_TEST_CASE(auto&, !copied && !moved && value_changed);
+    REF_TEST_CASE(auto&&, !copied && !moved && value_changed);
 }
 
 TEST_CASE("Modification", "[zip]") {
@@ -65,7 +68,7 @@ TEST_CASE("Modification", "[zip]") {
     }
     REQUIRE((v[0] != u[0] && v[1] != u[1] && v[2] != u[2]));
 
-    for (auto & [x, y] : zip(u, v)) {
+    for (auto& [x, y] : zip(u, v)) {
         x = y;
     }
     REQUIRE((v[0] == u[0] && v[1] == u[1] && v[2] == u[2]));
@@ -85,7 +88,7 @@ TEST_CASE("Built-in arrays", "[zip]") {
     int A[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 1000};
     char B[] = {5, 4, 3, 2, 1};
 
-    for (auto & [a, b] : zip(A, B)) {
+    for (auto& [a, b] : zip(A, B)) {
         REQUIRE(a == 6 - b);
     }
 }
@@ -128,22 +131,21 @@ TEST_CASE("Immutability", "[zip]") {
         STATIC_REQUIRE(std::is_const_v<decltype(x)>);
     }
 
-    for (auto & [x] : zip(v)) {
+    for (auto& [x] : zip(v)) {
         STATIC_REQUIRE(!std::is_const_v<decltype(x)>);
     }
 
-    for (auto const & [x] : zip(v)) {
+    for (auto const& [x] : zip(v)) {
         STATIC_REQUIRE(std::is_const_v<decltype(x)>);
     }
 
-    for (auto & [x] : zip(std::as_const(v))) {
+    for (auto& [x] : zip(std::as_const(v))) {
         STATIC_REQUIRE(std::is_const_v<decltype(x)>);
     }
 
-    for (auto const & [x] : zip(std::as_const(v))) {
+    for (auto const& [x] : zip(std::as_const(v))) {
         STATIC_REQUIRE(std::is_const_v<decltype(x)>);
     }
-
 }
 
 TEST_CASE("Initializer list", "[enumerate]") {
@@ -179,12 +181,11 @@ TEST_CASE("Set", "[enumerate]") {
 
 TEST_CASE("Map", "[enumerate]") {
     std::map<int, const char*> m = {
-            {2, "a"},
-            {324, "b"},
-            {44, "c"},
-            {52, "d"},
-            {0, "e"}
-    };
+        {2, "a"},
+        {324, "b"},
+        {44, "c"},
+        {52, "d"},
+        {0, "e"}};
     std::stringstream ss;
 
     for (auto [i, x] : enumerate(m)) {
@@ -202,7 +203,7 @@ TEST_CASE("Built-in", "[enumerate]") {
     }
 }
 
-TEST_CASE("Enumerate stress <kek>", "[enumerate]") {
+TEST_CASE("Enumerate stress", "[enumerate]") {
     std::vector<int> v;
     std::stringstream ss_enumerate, ss_expected;
 
@@ -222,19 +223,20 @@ TEST_CASE("Enumerate stress <kek>", "[enumerate]") {
     REQUIRE(ss_enumerate.str() == ss_expected.str());
 }
 
-template <typename T, std::size_t N>
+template<typename T, std::size_t N>
 using arr_ref = T (&)[N];
 
-template <std::size_t S, typename T, std::size_t N>
-auto sub (arr_ref<T, N> a) -> arr_ref<T, N-S> {
-    return reinterpret_cast<arr_ref<T, N-S>>(a[S]);
+template<std::size_t S, typename T, std::size_t N>
+auto sub(arr_ref<T, N> a) -> arr_ref<T, N - S> {
+    return reinterpret_cast<arr_ref<T, N - S>>(a[S]);
 }
 
 TEST_CASE("Example") {
     int F[10] = {0, 1};
     auto expected = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
+    using std::views::drop;
 
-    for (auto & [x, y, z] : zip(F,F,F).skip<1>(1).skip<2>(2)) {
+    for (auto& [x, y, z] : zip(F, F | drop(1), F | drop(2))) {
         z = x + y;
     }
 
@@ -243,13 +245,11 @@ TEST_CASE("Example") {
     }
 }
 
-
-
 TEST_CASE("Constexpr") {
     constexpr auto sum = [](const auto& array) -> int {
         int result = 0;
 
-        for (auto const & [x] : zip(array)) {
+        for (auto const& [x] : zip(array)) {
             result += x;
         }
         return result;
@@ -265,31 +265,51 @@ TEST_CASE("Constexpr") {
 TEST_CASE("Exceptions") {
     std::initializer_list<int> list = {1, 2, 3, 4, 5};
     std::vector<int> vec = {1, 2, 3, 4, 5};
-    STATIC_REQUIRE( noexcept(zip(list)) );
-    STATIC_REQUIRE( !noexcept(zip(vec)) );
+    STATIC_REQUIRE(noexcept(zip(list)));
+    STATIC_REQUIRE(!noexcept(zip(vec)));
 }
 
 TEST_CASE("Strong exception guarantee") {
     struct It {
         using value_type = int;
-        using reference = int &;
+        using reference = int&;
         using iterator_category = std::forward_iterator_tag;
         using difference_type = int;
 
         It() = default;
-        explicit It(int x) : i{x} {}
-        It(It const &) = default;
-        It & operator++() { if (++i == 5) throw 0; return *this; }
-        It operator++(int) { It cp = *this; ++*this; return cp; }
-        reference operator*() const { return i; }
-        bool operator==(const It & o) const { return i == o.i; }
-        bool operator!=(const It & o) const { return i != o.i; }
+        explicit It(int x)
+            : i{x} {
+        }
+        It(It const&) = default;
+        It& operator++() {
+            if (++i == 5)
+                throw 0;
+            return *this;
+        }
+        It operator++(int) {
+            It cp = *this;
+            ++*this;
+            return cp;
+        }
+        reference operator*() const {
+            return i;
+        }
+        bool operator==(const It& o) const {
+            return i == o.i;
+        }
+        bool operator!=(const It& o) const {
+            return i != o.i;
+        }
         mutable int i = 0;
     };
 
     struct S {
-        static auto begin() { return It(0); }
-        static auto end() { return It(10); }
+        static auto begin() {
+            return It(0);
+        }
+        static auto end() {
+            return It(10);
+        }
     } s;
 
     int arr1[] = {3, 4, 5, 6, 7, 8, 9, 0, 1, 2};
@@ -298,8 +318,12 @@ TEST_CASE("Strong exception guarantee") {
     auto beg = z.begin();
 
     try {
-        while (true) { ++beg; }
-    } catch (int) { }
+        while (true) {
+            ++beg;
+        }
+    }
+    catch (int) {
+    }
 
     auto [x, y, w] = *beg;
     REQUIRE(((x == 7) && (y == 4) && (w == 5)));
@@ -307,8 +331,9 @@ TEST_CASE("Strong exception guarantee") {
 
 TEST_CASE("Skip") {
     std::array<int, 10> F = {0, 1};
+    using std::views::drop;
 
-    for (auto & [F0, F1, F2] : zip(F, F, F).skip<1>(1).skip<2>(2)) {
+    for (auto& [F0, F1, F2] : zip(F, F | drop(1), F | drop(2))) {
         F2 = F0 + F1;
     }
 
@@ -319,7 +344,39 @@ TEST_CASE("Skip") {
 
     std::vector v = {1, 2, 3, 4, 5};
 
-    for (auto [x, y] : zip(v, v).skip<1>(1)) {
+    for (auto [x, y] : zip(v, v | drop(1))) {
         REQUIRE(x + 1 == y);
+    }
+}
+
+TEST_CASE("Rvalue") {
+    for (auto [i, x] : enumerate(std::vector<size_t>{0, 1, 2, 3, 4, 5, 6, 7, 8})) {
+        REQUIRE(i == x);
+    }
+}
+
+TEST_CASE("Rvalue-array") {
+    size_t array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+    for (auto [i, x, y] : enumerate(std::vector<size_t>{0, 1, 2, 3, 4, 5, 6, 7, 8},
+                                    array)) {
+        REQUIRE(i == x);
+        REQUIRE(i == y);
+    }
+}
+
+TEST_CASE("Rvalue no default constructor") {
+    struct A : public std::vector<int> {
+        A() = delete;
+        explicit A(int)
+            : std::vector<int>(0) {
+        }
+    };
+
+    A arr(0);
+    for (auto x : zip(arr)) {
+        static_cast<void>(x);
+    }
+    for (auto x : zip(A(0))) {
+        static_cast<void>(x);
     }
 }

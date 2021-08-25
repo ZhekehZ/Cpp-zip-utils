@@ -2,16 +2,15 @@
 #### _Some structured_binding-friendly functions for `C+-`_
 
 ---
-
 #### Declaration:
 ```c++
 template <std::ranges::forward_range ... Containers>
-auto zip(Containers & ... containers);
+auto zip(Containers && ... containers);
 ```
 
 ```c++
 template <std::ranges::forward_range ... Containers>
-auto enumerate(Containers & ... containers);
+auto enumerate(Containers && ... containers);
 ```
 ---
 #### Usage:
@@ -23,14 +22,15 @@ using namespace zip_utils;
 /*  or
     using zip_utils::zip;
     using zip_utils::enumerate;
-    using zip_utils::skip;
 */
 
 void test_10_fibonacci() {    
     std::array<int, 10> F = {0, 1};
     auto expected = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
-    
-    for (auto & [F0, F1, F2] : zip(F, F, F).skip<1>(1).skip<2>(2)) {
+
+    using std::views::drop;
+
+    for (auto & [F0, F1, F2] : zip(F, F | drop(1), F | drop(2))) {
         F2 = F0 + F1;
     }
 
@@ -97,17 +97,7 @@ void test_10_fibonacci() {
         constexpr std::array<int, 5> arr = {1, 43, 7, 3, 7};
         static_assert(sum(arr) == 61);
         ```
-    - Skip
-        ```c++
-        std::vector v = {1, 2, 3, 4, 5};
-      
-        for (auto [x, y] : zip(v, v).skip<0>(1)) {
-            // skip<i, j> skips j iterations of the i-th iterator
-            // x == 2, 3, 4, 5
-            // y == 1, 2, 3, 4, 5
-        }
-        ```
-      
+
 *   **Enumerate**
     - Simple enumeration
         ```c++
