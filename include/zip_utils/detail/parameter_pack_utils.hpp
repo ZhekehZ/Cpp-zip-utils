@@ -8,10 +8,8 @@ namespace zip_utils::detail::parameter_pack_utils {
     template<size_t Size, template<typename> typename Criteria, typename... Ts>
     struct filter_impl;
 
-    template<size_t... Is>
-    struct Indices {
-        static constexpr size_t size = sizeof...(Is);
-    };
+    template<size_t...>
+    struct Indices { };
 
     template<size_t Size, template<typename> typename Criteria>
     struct filter_impl<Size, Criteria> {
@@ -44,13 +42,15 @@ namespace zip_utils::detail::parameter_pack_utils {
              typename T, typename... Ts>
     struct filter_impl<Size, Criteria, T, Ts...> {
         static constexpr bool is_ok = Criteria<T>::value;
-        using next = filter_impl<Size, Criteria, Ts...>;
         static constexpr size_t index = Size - sizeof...(Ts) - 1;
 
-        using indices = std::conditional_t<is_ok,
-                                           typename integer_sequence_append<index, typename next::indices>::indices,
+        using next = filter_impl<Size, Criteria, Ts...>;
+
+        using indices = std::conditional_t<filter_impl::is_ok,
+                                           typename integer_sequence_append<filter_impl::index,
+                                                                            typename next::indices>::indices,
                                            typename next::indices>;
-        using type = std::conditional_t<is_ok,
+        using type = std::conditional_t<filter_impl::is_ok,
                                         typename tuple_append<T, typename next::type>::type,
                                         typename next::type>;
     };

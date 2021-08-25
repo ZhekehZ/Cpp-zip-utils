@@ -2,10 +2,6 @@
 #### _Some structured_binding-friendly functions for `C+-`_
 
 ---
-#### Installation
-
-
----
 #### Declaration:
 ```c++
 template <std::ranges::forward_range ... Containers>
