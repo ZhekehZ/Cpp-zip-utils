@@ -46,7 +46,7 @@ jobs:
 
       - name: Download Codacy-Clang-Tidy
         run: |
-          wget -o tmp https://github.com/codacy/codacy-clang-tidy/releases/latest/download/
+          wget -o tmp https://github.com/codacy/codacy-clang-tidy/releases/latest/download/ || echo "redirection ..."
           version=$(cat tmp | grep Location | sed -E "s~Location: https://github.com/codacy/codacy-clang-tidy/releases/download/([^ ]*) \[following\]~\1~g")
           echo "CODACY-CLANG-TIDY VERSION: \"${version}\""
 
