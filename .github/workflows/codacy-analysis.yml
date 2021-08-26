@@ -61,7 +61,7 @@ jobs:
           chmod +x codacy-clang-tidy-${version}
           
           export PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
-          export COMMIT="$(git rev-parse --short HEAD)"
+          export COMMIT="$( git log -1 --format='%H' )"
 
           echo "COMMIT SHA: ${COMMIT}"
 
