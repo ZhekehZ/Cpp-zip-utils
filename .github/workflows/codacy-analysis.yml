@@ -45,6 +45,9 @@ jobs:
           max-allowed-issues: 2147483647
 
       - name: Run Clang-Tidy
+        env:
+          PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          COMMIT: ${GITHUB_SHA}
         run: |
           wget -o tmp https://github.com/codacy/codacy-clang-tidy/releases/latest/download/ || echo "redirection ..."
           version=$(cat tmp | grep Location | sed -E "s~Location: https://github.com/codacy/codacy-clang-tidy/releases/download/([^ ]*) \[following\]~\1~g")
@@ -60,10 +63,7 @@ jobs:
           fi
           chmod +x codacy-clang-tidy-${version}
           
-          export PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
-          export COMMIT="$( git log -1 --format='%H' )"
-
-          echo "COMMIT SHA: ${COMMIT}"
+          echo "COMMIT: ${COMMIT}"
 
           sudo apt-get install clang-tidy
 
