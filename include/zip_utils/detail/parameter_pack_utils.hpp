@@ -5,13 +5,13 @@
 
 namespace zip_utils::detail::parameter_pack_utils {
 
-    template<size_t Size, template<typename> typename Criteria, typename... Ts>
+    template<std::size_t Size, template<typename> typename Criteria, typename... Ts>
     struct filter_impl;
 
-    template<size_t...>
+    template<std::size_t...>
     struct Indices { };
 
-    template<size_t Size, template<typename> typename Criteria>
+    template<std::size_t Size, template<typename> typename Criteria>
     struct filter_impl<Size, Criteria> {
         using indices = Indices<>;
         using type = std::tuple<>;
@@ -27,9 +27,9 @@ namespace zip_utils::detail::parameter_pack_utils {
         using type = std::decay_t<decltype(*impl(static_cast<NextTuple*>(nullptr)))>;
     };
 
-    template<size_t I, typename NextSeq>
+    template<std::size_t I, typename NextSeq>
     struct integer_sequence_append {
-        template<size_t... Is>
+        template<std::size_t... Is>
         static Indices<I, Is...>* impl(Indices<Is...>*) {
             return nullptr;
         }
@@ -37,12 +37,12 @@ namespace zip_utils::detail::parameter_pack_utils {
         using indices = std::decay_t<decltype(*impl(static_cast<NextSeq*>(nullptr)))>;
     };
 
-    template<size_t Size,
+    template<std::size_t Size,
              template<typename> typename Criteria,
              typename T, typename... Ts>
     struct filter_impl<Size, Criteria, T, Ts...> {
         static constexpr bool is_ok = Criteria<T>::value;
-        static constexpr size_t index = Size - sizeof...(Ts) - 1;
+        static constexpr std::size_t index = Size - sizeof...(Ts) - 1;
 
         using next = filter_impl<Size, Criteria, Ts...>;
 
@@ -77,11 +77,11 @@ namespace zip_utils::detail::parameter_pack_utils {
     template<template<typename> typename Criteria, typename... Args>
     bool constexpr at_least_one_is = (Criteria<Args>::value || ... || false);
 
-    template<size_t Idx, size_t... Indices>
-    constexpr size_t count_less_than = ((Indices < Idx ? 1 : 0) + ... + 0);
+    template<std::size_t Idx, std::size_t... Indices>
+    constexpr std::size_t count_less_than = ((Indices < Idx ? 1 : 0) + ... + 0);
 
-    template<size_t Idx, size_t... Indices>
-    constexpr size_t is_in = ((Idx == Indices) || ... || false);
+    template<std::size_t Idx, std::size_t... Indices>
+    constexpr std::size_t is_in = ((Idx == Indices) || ... || false);
 
     template<template<typename> typename Constructor>
     struct wrap {

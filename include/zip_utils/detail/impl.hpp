@@ -87,10 +87,10 @@ namespace zip_utils::detail::impl {
         using Iter = zip_iterator<Iterators...>;
 
     public:
-        template<size_t... RvalueIndices, typename... Containers, size_t... Indices>
+        template<std::size_t... RvalueIndices, typename... Containers, std::size_t... Indices>
         constexpr zip_impl_with_rvalue_collections(
             parameter_pack_utils::Indices<RvalueIndices...>,
-            std::integer_sequence<size_t, Indices...>,
+            std::integer_sequence<std::size_t, Indices...>,
             Containers&&... containers)
             : storage_(), begin_(zip_iterator{
                               std::begin(
@@ -132,7 +132,7 @@ namespace zip_utils::detail::impl {
             Rvalues,
             std::decay_t<decltype(std::begin(containers))>...>(
             RvalueIndices{},
-            std::make_integer_sequence<size_t, sizeof...(Containers)>{},
+            std::make_integer_sequence<std::size_t, sizeof...(Containers)>{},
             std::forward<Containers>(containers)...);
     }
 
@@ -142,7 +142,7 @@ namespace std {
 
     template<typename... Iterators>
     struct tuple_size<zip_utils::detail::utils::iterator_pack<Iterators...>> {
-        static constexpr size_t value = sizeof...(Iterators);
+        static constexpr std::size_t value = sizeof...(Iterators);
     };
 
     template<std::size_t I, std::forward_iterator... Iterators>

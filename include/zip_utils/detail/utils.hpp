@@ -105,12 +105,12 @@ namespace zip_utils::detail::utils {
             std::remove_cvref_t<decltype(std::begin(arg))>>;
     };
 
-    template<size_t CurrIdx, typename StorageT, typename Container, size_t... IndicesToSave>
+    template<std::size_t CurrIdx, typename StorageT, typename Container, std::size_t... IndicesToSave>
     constexpr Container& save_to_storage(
         StorageT& storage,
         Container&& container) {
         if constexpr (parameter_pack_utils::is_in<CurrIdx, IndicesToSave...>) {
-            constexpr size_t IndexToSave = parameter_pack_utils::count_less_than<CurrIdx, IndicesToSave...>;
+            constexpr std::size_t IndexToSave = parameter_pack_utils::count_less_than<CurrIdx, IndicesToSave...>;
             get<IndexToSave>(storage) = std::forward<Container>(container);
             return get<IndexToSave>(storage).value();
         }
@@ -119,12 +119,12 @@ namespace zip_utils::detail::utils {
         }
     }
 
-    template<size_t CurrIdx, typename StorageT, typename Container, size_t... IndicesToSave>
+    template<std::size_t CurrIdx, typename StorageT, typename Container, std::size_t... IndicesToSave>
     constexpr Container& get_from_storage(
         StorageT& storage,
         Container&& container) {
         if constexpr (parameter_pack_utils::is_in<CurrIdx, IndicesToSave...>) {
-            constexpr size_t IndexToSave = parameter_pack_utils::count_less_than<CurrIdx, IndicesToSave...>;
+            constexpr std::size_t IndexToSave = parameter_pack_utils::count_less_than<CurrIdx, IndicesToSave...>;
             return get<IndexToSave>(storage).value();
         }
         else {

@@ -46,13 +46,29 @@ jobs:
 
       - name: Run Clang-Tidy
         run: |
+          wget -o tmp https://github.com/codacy/codacy-clang-tidy/releases/latest/download/
+          version=$(cat tmp | grep Location | sed -E "s~Location: https://github.com/codacy/codacy-clang-tidy/releases/download/([^ ]*) \[following\]~\1~g")
+          echo "CODACY-CLANG-TIDY VERSION: \"${version}\""
+
+          wget https://github.com/codacy/codacy-clang-tidy/releases/download/${version}/codacy-clang-tidy-${version}
+          if [ -f codacy-clang-tidy-${version} ]
+          then
+            echo "Success!"
+          else
+            echo "Download failed"
+            exit 1
+          fi
+          chmod +x codacy-clang-tidy-${version}
+
           export PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
           export COMMIT="$(git rev-parse --short HEAD)"
 
+          echo "COMMIT SHA: ${COMMIT}"
+
           # 1. Run Clang-Tidy
-          clang-tidy "<clang-tidy-configs>" | \
+          clang-tidy test/clang_tidy.cpp -extra-arg=-std=c++20 -- -Iinclude-extra-arg=-std=c++20 | \
           # 2. Convert the Clang-Tidy output to a format that the Codacy API accepts
-          ./codacy-clang-tidy-"<version>" | \
+          ./codacy-clang-tidy-${version} | \
           # 3. Send the results to Codacy
           curl -XPOST -L -H "project-token: $PROJECT_TOKEN" \
               -H "Content-type: application/json" -d @- \
