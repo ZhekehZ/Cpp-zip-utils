@@ -47,7 +47,7 @@ jobs:
       - name: Run Clang-Tidy
         env:
           PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          COMMIT: ${GITHUB_SHA}
+          COMMIT: ${{ github.sha }}
         run: |
           wget -o tmp https://github.com/codacy/codacy-clang-tidy/releases/latest/download/ || echo "redirection ..."
           version=$(cat tmp | grep Location | sed -E "s~Location: https://github.com/codacy/codacy-clang-tidy/releases/download/([^ ]*) \[following\]~\1~g")
