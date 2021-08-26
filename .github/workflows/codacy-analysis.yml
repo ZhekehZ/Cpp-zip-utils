@@ -44,7 +44,7 @@ jobs:
           # This will handover control about PR rejection to the GitHub side
           max-allowed-issues: 2147483647
 
-      - name: Download Codacy-Clang-Tidy
+      - name: Run Clang-Tidy
         run: |
           wget -o tmp https://github.com/codacy/codacy-clang-tidy/releases/latest/download/ || echo "redirection ..."
           version=$(cat tmp | grep Location | sed -E "s~Location: https://github.com/codacy/codacy-clang-tidy/releases/download/([^ ]*) \[following\]~\1~g")
@@ -59,9 +59,7 @@ jobs:
             exit 1
           fi
           chmod +x codacy-clang-tidy-${version}
-      
-      - name: Run Clang-Tidy
-        run: |
+          
           export PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
           export COMMIT="$(git rev-parse --short HEAD)"
 
