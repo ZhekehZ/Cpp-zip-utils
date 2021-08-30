@@ -1,6 +1,5 @@
 ## Cpp-zip-utils ##
-[![CMake](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml) [![CodeQL](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml) [![Codacy Security Scan](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codacy-analysis.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codacy-analysis.yml)  
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3c6ef7eba837407da9d194323fe0e8f6)](https://www.codacy.com/gh/ZhekehZ/Cpp-zip-utils/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ZhekehZ/Cpp-zip-utils&amp;utm_campaign=Badge_Grade)  
+[![CMake](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml) [![CodeQL](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml) 
 _Some structured_binding-friendly functions for `C+-`_
 
 ---
