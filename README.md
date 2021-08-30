@@ -1,7 +1,15 @@
-## Cpp-zip-utils ##
+## Cpp-zip-utils [c++20] ##
 [![CMake](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml) [![CodeQL](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/codeql-analysis.yml)   
 _Some structured_binding-friendly functions for `C+-`_
 
+---
+### Installation ###
+```bash
+mkdir -p build && \
+cmake -B build && \
+cmake --build build --target test && \
+sudo cmake --build build --target install
+```
 ---
 ### Declaration ###
 ```c++
