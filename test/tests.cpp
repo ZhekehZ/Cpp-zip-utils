@@ -96,7 +96,8 @@ TEST_CASE("References", "[zip]") {
         REQUIRE(a[0].value == 3);
 
         for (auto& [x, y] : zip(a, b)) {
-            A a = x;
+            A _ = x;
+            (void) _;
         }
 
         REQUIRE(A::copies() == 1);
@@ -120,7 +121,8 @@ TEST_CASE("References", "[zip]") {
         REQUIRE(a[0].value == 3);
 
         for (auto&& [x, y] : zip(a, b)) {
-            A a = x;
+            A _ = x;
+            (void) _;
         }
 
         REQUIRE(A::copies() == 1);
@@ -140,7 +142,7 @@ TEST_CASE("References", "[zip]") {
 
         REQUIRE(A::copies() == 1);
         REQUIRE(A::moves() == 1);
-        REQUIRE(a[0].value == 0);
+        REQUIRE(a[0].value == 0); // NOLINT(bugprone-use-after-move)
 
         a = { A(12) };
         A::reset();
@@ -152,7 +154,7 @@ TEST_CASE("References", "[zip]") {
 
         REQUIRE(A::copies() == 0);
         REQUIRE(A::moves() == 2);
-        REQUIRE(a[0].value == 0);
+        REQUIRE(a[0].value == 0); // NOLINT(bugprone-use-after-move)
     }
 
     SECTION("auto & [x, y] = zip(move(a), b)"){
@@ -169,7 +171,7 @@ TEST_CASE("References", "[zip]") {
 
         REQUIRE(A::copies() == 0);
         REQUIRE(A::moves() == 1);
-        REQUIRE(a[0].value == 0);
+        REQUIRE(a[0].value == 0); // NOLINT(bugprone-use-after-move)
     }
 
     SECTION("auto && [x, y] = zip(move(a), b)"){
@@ -186,7 +188,7 @@ TEST_CASE("References", "[zip]") {
 
         REQUIRE(A::copies() == 0);
         REQUIRE(A::moves() == 1);
-        REQUIRE(a[0].value == 0);
+        REQUIRE(a[0].value == 0); // NOLINT(bugprone-use-after-move)
     }
 
     SECTION("auto [x, y] = zip(<initializer>, b)"){
@@ -411,7 +413,6 @@ TEST_CASE("Example") {
 TEST_CASE("Constexpr") {
     constexpr auto sum = [](const auto& array) -> int {
         int result = 0;
-
         for (auto const& [x] : zip(array)) {
             result += x;
         }
