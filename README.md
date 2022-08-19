@@ -21,16 +21,22 @@ auto zip(Containers && ... containers);
 template <std::ranges::forward_range ... Containers>
 auto enumerate(Containers && ... containers);
 ```
+
+```c++
+template <typename Value, std::same_as<Value> ... Values>
+constexpr auto indexed(Value && value, Values && ... values);
+```
 ---
 ### Usage ###
 ```c++
 #include <cassert>
 
 #include "zip_utils.hpp"
-using namespace zip_utils;
+using namespace zip_utils::views;
 /*  or
-    using zip_utils::zip;
-    using zip_utils::enumerate;
+    using zip_utils::views::zip;
+    using zip_utils::views::enumerate;
+    using zip_utils::views::indexed;
 */
 
 void test_10_fibonacci() {    
@@ -39,12 +45,19 @@ void test_10_fibonacci() {
 
     using std::views::drop;
 
+    // zip view
     for (auto & [F0, F1, F2] : zip(F, F | drop(1), F | drop(2))) {
         F2 = F0 + F1;
     }
 
+    // enumerate view
     for (auto [i, x] : enumerate(expected)) {
         assert(F[i] == x);
+    }
+    
+    // indexed view
+    for (auto [idx, value] : indexed(1, 2, 3)) {
+        assert(idx == value);
     }
 }
 ```
@@ -70,7 +83,25 @@ void test_10_fibonacci() {
             y = x;
         }
         ```
-      
+
+    *   PRValues / XValues
+        ```c++
+        std::vector<A> data(3);
+
+        // Default behaviour
+        for (auto [x, y] : zip(std::move(data), /* ... */)) {
+            // data will be moved into zip object
+            // elements will be **copied** into `x`
+        }
+        
+        // If you want to iterate just once
+        using zip_utils::configuration::zip_config;
+        for (auto [x, y] : zip<zip_config::MOVE_FROM_RVALUES>(std::move(data), /* ... */) {
+            // data will be moved into zip object
+            // elements will be **moved** into `x`
+        }
+        ```
+
     *   Built-in arrays and c-strings
         ```c++
         int a[4] = {0};
@@ -111,11 +142,16 @@ void test_10_fibonacci() {
         ```
 
 *   **Enumerate**
-    *   Simple enumeration
-        ```c++
-        std::vector<int> v = { /* */ };
+    ```c++
+    std::vector<int> v = { /* */ };
         
-        for (auto [i, x] : enumerate(v)) {
-            std::cout << "v[" << i << "] == " << x << std::endl;
-        }
-        ```
+    for (auto [i, x] : enumerate(v)) {
+        std::cout << "v[" << i << "] == " << x << std::endl;
+    }
+    ```
+*   **Indexed**
+    ```c++
+    for  (auto [i, x] : indexed(0, 1, 2)) {
+        std::cout << "index = " << i << ", value = " << x << std::endl;
+    }
+    ```

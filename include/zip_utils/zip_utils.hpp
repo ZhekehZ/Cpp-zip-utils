@@ -1,31 +1,35 @@
 #pragma once
 
+#include "detail/configuration.hpp"
 #include "detail/counter.hpp"
 #include "detail/impl.hpp"
-#include "detail/parameter_pack_utils.hpp"
+#include "detail/utils.hpp"
 
-namespace zip_utils {
+namespace zip_utils::views {
 
-    template<std::ranges::forward_range... Containers>
+    template<configuration::zip_config Config = configuration::zip_config::NONE,
+             std::ranges::forward_range ... Containers>
     constexpr auto zip(Containers&&... containers)
-    noexcept((detail::utils::is_nothrow_beg_end_copy_constructible_v<Containers> && ...)) {
+    noexcept (detail::utils::all_are_lvalues_or_nothrow_movable<Containers && ...>()) {
         using namespace detail::impl;
-        using namespace detail::parameter_pack_utils;
-
-        if constexpr (at_least_one_is<std::is_rvalue_reference, Containers&&...>) {
-            return make_zip_impl_with_rvalue_collections(std::forward<Containers>(containers)...);
-        }
-        else {
-            return make_zip_impl(std::forward<Containers>(containers)...);
-        }
+        using impl = zip_impl<Config, detail::utils::remove_rvalue_ref_t<Containers> ...>;
+        return impl(std::forward<Containers>(containers)...);
     }
 
-    template<std::ranges::forward_range... Containers>
+    template<configuration::zip_config Config = configuration::zip_config::NONE,
+             std::ranges::forward_range... Containers>
     constexpr auto enumerate(Containers&&... containers)
-    noexcept(noexcept(zip(std::forward<Containers>(containers)...))) {
-        detail::counter::counter counter;
-        return zip(counter,
-                   std::forward<Containers>(containers)...);
+    noexcept (noexcept(zip(detail::counter::counter{},
+                              std::forward<Containers>(containers)...))){
+        using namespace detail::counter;
+        return zip<Config>(counter{}, std::forward<Containers>(containers)...);
     }
 
-}// namespace zip_utils
+    template <typename Value, std::same_as<Value> ... Values>
+    constexpr auto indexed(Value && value, Values && ... values)
+    noexcept (noexcept(enumerate(std::array<std::decay_t<Value>, 1>{ std::forward<Value>(value) }))) {
+        return enumerate(std::array<std::decay_t<Value>, sizeof...(Values) + 1>{
+            std::forward<Value>(value), std::forward<Values>(values) ...});
+    }
+
+}// namespace zip_utils::view

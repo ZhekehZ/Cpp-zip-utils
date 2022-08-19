@@ -4,73 +4,234 @@
 
 #include <array>
 #include <map>
+#include <ranges>
 #include <set>
 #include <sstream>
-#include <stdexcept>
 #include <string_view>
 #include <vector>
 
-using namespace zip_utils;
+using namespace zip_utils::views;
 using namespace std::literals;
 
-TEST_CASE("References", "[zip]") {
-    static bool copied = false;
-    static bool moved = false;
-    bool value_changed = false;
+template<int* copy_count, int* move_count>
+struct CopyMoveCounter {
+    explicit CopyMoveCounter(int value)
+        : value(value)
+    {};
 
-    struct A {
-        A() = default;
-        A(const A&) {
-            copied = true;
-        }
-        A(A&&)
-        noexcept {
-            moved = true;
-        }
-        A& operator=(const A&) {
-            copied = true;
-            return *this;
-        }
-        A& operator=(A&&) noexcept {
-            moved = true;
-            return *this;
-        }
-
-        int value = 0;
+    CopyMoveCounter(const CopyMoveCounter& other) noexcept {
+        value = other.value;
+        ++*copy_count;
+    }
+    CopyMoveCounter(CopyMoveCounter&& other) noexcept {
+        std::swap(value, other.value);
+        ++*move_count;
+    }
+    CopyMoveCounter& operator=(const CopyMoveCounter& other) noexcept {
+        value = other.value;
+        ++*copy_count;
+        return *this;
+    }
+    CopyMoveCounter& operator=(CopyMoveCounter&& other) noexcept {
+        std::swap(value, other.value);
+        ++*move_count;
+        return *this;
+    }
+    static void reset() {
+        *copy_count = 0;
+        *move_count = 0;
     };
+    static int copies() {
+        return *copy_count;
+    }
+    static int moves() {
+        return *move_count;
+    }
 
-    A a[] = {{}};
-    int b[] = {0};
+    int value = 0;
+};
 
-    {
-        copied = false;
-        moved = false;
-        a[0].value = 0;
+#define NewTypeCMC decltype([] {      \
+static int copy_count = 0;            \
+static int move_count = 0;            \
+return CopyMoveCounter<&copy_count, &move_count>(0); \
+}())
+
+
+TEST_CASE("References", "[zip]") {
+    using zip_utils::configuration::zip_config;
+
+    SECTION("auto [x, y] = zip(a, b)"){
+        using A = NewTypeCMC;
+
+        std::array<A, 1> a = { A(0) };
+        std::array<int, 1> b{};
+
+        INFO("`a` is passed by reference, and its elements are copied."
+             "Assignment doesn't affect `a`.")
         for (auto [x, y] : zip(a, b)) {
             x.value = 3;
         }
-        value_changed = a[0].value != 0;
-        REQUIRE((copied && !moved && !value_changed));
+
+        REQUIRE(A::copies() == 1);
+        REQUIRE(A::moves() == 0);
+        REQUIRE(a[0].value == 0);
     }
-    {
-        copied = false;
-        moved = false;
-        a[0].value = 0;
+
+
+    SECTION("auto & [x, y] = zip(a, b)"){
+        using A = NewTypeCMC;
+
+        std::array<A, 1> a = { A(0) };
+        std::array<int, 1> b{};
+
+        INFO("`a` and its elements are passed by reference."
+             "Assignment changes `a`'s elements.")
         for (auto& [x, y] : zip(a, b)) {
             x.value = 3;
         }
-        value_changed = a[0].value != 0;
-        REQUIRE((!copied && !moved && value_changed));
+
+        REQUIRE(A::copies() == 0);
+        REQUIRE(A::moves() == 0);
+        REQUIRE(a[0].value == 3);
+
+        for (auto& [x, y] : zip(a, b)) {
+            A a = x;
+        }
+
+        REQUIRE(A::copies() == 1);
+        REQUIRE(A::moves() == 0);
     }
-    {
-        copied = false;
-        moved = false;
-        a[0].value = 0;
+
+    SECTION("auto && [x, y] = zip(a, b)"){
+        using A = NewTypeCMC;
+
+        std::array<A, 1> a = { A(0) };
+        std::array<int, 1> b{};
+
+        INFO("`a` and its elements are passed by reference."
+             "Assignment changes `a`'s elements.")
         for (auto&& [x, y] : zip(a, b)) {
             x.value = 3;
         }
-        value_changed = a[0].value != 0;
-        REQUIRE((!copied && !moved && value_changed));
+
+        REQUIRE(A::copies() == 0);
+        REQUIRE(A::moves() == 0);
+        REQUIRE(a[0].value == 3);
+
+        for (auto&& [x, y] : zip(a, b)) {
+            A a = x;
+        }
+
+        REQUIRE(A::copies() == 1);
+        REQUIRE(A::moves() == 0);
+    }
+
+    SECTION("auto [x, y] = zip(move(a), b)"){
+        using A = NewTypeCMC;
+
+        std::array<A, 1> a = { A(12) };
+        std::array<int, 1> b{};
+
+        INFO("`a` is moved inside zip object, its elements are copied to x.")
+        for (auto [x, y] : zip(std::move(a), b)) {
+            x.value = 4;
+        }
+
+        REQUIRE(A::copies() == 1);
+        REQUIRE(A::moves() == 1);
+        REQUIRE(a[0].value == 0);
+
+        a = { A(12) };
+        A::reset();
+
+        INFO("`a` is moved inside zip object, its elements are moved to x.")
+        for (auto [x, y] : zip<zip_config::MOVE_FROM_RVALUES>(std::move(a), b)) {
+            x.value = 4;
+        }
+
+        REQUIRE(A::copies() == 0);
+        REQUIRE(A::moves() == 2);
+        REQUIRE(a[0].value == 0);
+    }
+
+    SECTION("auto & [x, y] = zip(move(a), b)"){
+        using A = NewTypeCMC;
+
+        std::array<A, 1> a = { A(0) };
+        std::array<int, 1> b{};
+
+        INFO("`a` is moved inside zip object, "
+             "its elements are taken by reference.")
+        for (auto & [x, y] : zip(std::move(a), b)) {
+            x.value = 4;
+        }
+
+        REQUIRE(A::copies() == 0);
+        REQUIRE(A::moves() == 1);
+        REQUIRE(a[0].value == 0);
+    }
+
+    SECTION("auto && [x, y] = zip(move(a), b)"){
+        using A = NewTypeCMC;
+
+        std::array<A, 1> a = { A(0) };
+        std::array<int, 1> b{};
+
+        INFO("`a` is moved inside zip object, "
+             "its elements are taken by reference.")
+        for (auto && [x, y] : zip(std::move(a), b)) {
+            x.value = 4;
+        }
+
+        REQUIRE(A::copies() == 0);
+        REQUIRE(A::moves() == 1);
+        REQUIRE(a[0].value == 0);
+    }
+
+    SECTION("auto [x, y] = zip(<initializer>, b)"){
+        using A = NewTypeCMC;
+
+        std::array<int, 1> b{};
+
+        INFO("Collection is moved inside zip object, "
+             "its elements are moved to x.")
+        for (auto [x, y] : zip<zip_config::MOVE_FROM_RVALUES>(std::array<A, 1>{A(12)}, b)) {
+            x.value = 4;
+        }
+
+        REQUIRE(A::copies() == 0);
+        REQUIRE(A::moves() == 2);
+    }
+
+    SECTION("auto & [x, y] = zip(<initializer>, b)"){
+        using A = NewTypeCMC;
+
+        std::array<int, 1> b{};
+
+        INFO("Collection is moved inside zip object, "
+             "its elements are taken by reference.")
+        for (auto & [x, y] : zip(std::array<A, 1>{A(12)}, b)) {
+            x.value = 4;
+        }
+
+        REQUIRE(A::copies() == 0);
+        REQUIRE(A::moves() == 1);
+    }
+
+    SECTION("auto && [x, y] = zip(<initializer>, b)"){
+        using A = NewTypeCMC;
+
+        std::array<int, 1> b{};
+
+        INFO("Collection is moved inside zip object, "
+             "its elements are taken by reference.")
+        for (auto && [x, y] : zip(std::array<A, 1>{A(12)}, b)) {
+            x.value = 4;
+        }
+
+        REQUIRE(A::copies() == 0);
+        REQUIRE(A::moves() == 1);
     }
 }
 
@@ -78,11 +239,13 @@ TEST_CASE("Modification", "[zip]") {
     std::vector u = {1, 2, 3, 4, 5};
     std::vector v = {'x', 'y', 'z'};
 
+    INFO("Values are copied.")
     for (auto [x, y] : zip(u, v)) {
         x = y;
     }
     REQUIRE((v[0] != u[0] && v[1] != u[1] && v[2] != u[2]));
 
+    INFO("Values are taken by reference.")
     for (auto& [x, y] : zip(u, v)) {
         x = y;
     }
@@ -90,43 +253,44 @@ TEST_CASE("Modification", "[zip]") {
 }
 
 TEST_CASE("Containers", "[zip]") {
-    std::vector v = {1, 2, 3, 0, 0, 0};
-    std::set s = {2, 3, 4};
-    std::map<int, std::string> m = {{2, "x"}, {4, "y"}, {8, "no"}};
+    SECTION("Basic containers") {
+        std::vector v = {1, 2, 3, 0, 0, 0};
+        std::set s = {2, 3, 4};
+        std::map<int, std::string> m = {{2, "x"}, {4, "y"}, {8, "no"}};
 
-    for (auto [x, y, z] : zip(v, s, m)) {
-        REQUIRE((x + 1 == y && static_cast<unsigned>(z.first) == 1u << static_cast<unsigned>(x)));
+        for (auto [x, y, z] : zip(v, s, m)) {
+            STATIC_REQUIRE(std::is_const_v<decltype(y)>);
+            STATIC_REQUIRE(std::is_const_v<decltype(z.first)>);
+            REQUIRE((x + 1 == y && z.first == 1 << x));
+        }
+    }
+
+    SECTION("Built-in arrays") {
+        int A[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 1000};
+        char B[] = {5, 4, 3, 2, 1};
+
+        for (auto& [a, b] : zip(A, B)) {
+            REQUIRE(a == 6 - b);
+        }
+    }
+
+    SECTION("C-strings") {
+        std::stringstream ss;
+
+        auto message1 = "hello, world! ;)"sv;
+        for (auto [x, y] : zip(message1, "...."sv)) {
+            ss << x << y;
+        }
+        REQUIRE(ss.str() == "h.e.l.l.");
     }
 }
 
-TEST_CASE("Built-in arrays", "[zip]") {
-    int A[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 1000};
-    char B[] = {5, 4, 3, 2, 1};
-
-    for (auto& [a, b] : zip(A, B)) {
-        REQUIRE(a == 6 - b);
-    }
-}
-
-TEST_CASE("C-string", "[zip]") {
-    std::stringstream ss;
-
-    auto message1 = "hello, world! ;)"sv;
-    auto message2 = "...."sv;
-    for (auto [x, y] : zip(message1, message2)) {
-        ss << x << y;
-    }
-    REQUIRE(ss.str() == "h.e.l.l.");
-}
-
-TEST_CASE("Zip as argument", "[zip]") {
+TEST_CASE("Recursion", "[zip]") {
     std::vector v = {1, 2, 3};
     std::vector u = {3, 6, 9};
-    auto z = zip(u, v);
 
     std::stringstream ss;
-
-    for (auto [x, y] : zip(z, z)) {
+    for (auto [x, y] : zip(zip(u, v), zip(u, v))) {
         auto [a, b] = x;
         auto [c, d] = y;
         ss << a << ' ' << b << ' ' << c << ' ' << d << std::endl;
@@ -163,87 +327,67 @@ TEST_CASE("Immutability", "[zip]") {
     }
 }
 
-TEST_CASE("Initializer list", "[enumerate]") {
-    auto numbers = {1u, 2u, 3u, 4u, 5u};
-    for (auto [i, x] : enumerate(numbers)) {
-        REQUIRE(i + 1 == x);
-    }
-}
-
-TEST_CASE("Vector", "[enumerate]") {
-    std::vector v = {1, 2, 3, 4, 5};
-    std::stringstream ss;
-
-    auto enumeration = enumerate(v);
-    for (auto [i, x] : enumeration) {
-        ss << i << ' ' << x << ' ';
+TEST_CASE("Collections", "[enumerate]") {
+    SECTION("Initializer list") {
+        auto numbers = {1u, 2u, 3u, 4u, 5u};
+        for (auto [i, x] : enumerate(numbers)) {
+            REQUIRE(i + 1 == x);
+        }
     }
 
-    REQUIRE(ss.str() == "0 1 1 2 2 3 3 4 4 5 ");
-}
+    SECTION("Vector") {
+        std::vector v = {1, 2, 3, 4, 5};
+        std::stringstream ss;
 
-TEST_CASE("Set", "[enumerate]") {
-    std::set s = {'a', 'b', 'c', 'd', 'e'};
-    std::stringstream ss;
+        auto enumeration = enumerate(v);
+        for (auto [i, x] : enumeration) {
+            ss << i << ' ' << x << ' ';
+        }
 
-    auto enumeration = enumerate(s);
-    for (auto [i, x] : enumeration) {
-        ss << i << ' ' << x << ' ';
+        REQUIRE(ss.str() == "0 1 1 2 2 3 3 4 4 5 ");
     }
 
-    REQUIRE(ss.str() == "0 a 1 b 2 c 3 d 4 e ");
-}
+    SECTION("Set") {
+        std::set s = {'a', 'b', 'c', 'd', 'e'};
+        std::stringstream ss;
 
-TEST_CASE("Map", "[enumerate]") {
-    std::map<int, const char*> m = {
-        {2, "a"},
-        {324, "b"},
-        {44, "c"},
-        {52, "d"},
-        {0, "e"}};
-    std::stringstream ss;
+        auto enumeration = enumerate(s);
+        for (auto [i, x] : enumeration) {
+            ss << i << ' ' << x << ' ';
+        }
 
-    for (auto [i, x] : enumerate(m)) {
-        ss << i << ' ' << x.first << ',' << x.second << ' ';
+        REQUIRE(ss.str() == "0 a 1 b 2 c 3 d 4 e ");
     }
 
-    REQUIRE(ss.str() == "0 0,e 1 2,a 2 44,c 3 52,d 4 324,b ");
-}
+    SECTION("Map") {
+        std::map<int, const char*> m = {
+            {2, "a"},
+            {324, "b"},
+            {44, "c"},
+            {52, "d"},
+            {0, "e"}};
+        std::stringstream ss;
 
-TEST_CASE("Built-in", "[enumerate]") {
-    std::vector<int> simple_array[] = {{2}, {4}, {8}, {16}};
+        for (auto [i, x] : enumerate(m)) {
+            ss << i << ' ' << x.first << ',' << x.second << ' ';
+        }
 
-    for (auto [i, x] : enumerate(simple_array)) {
-        REQUIRE(static_cast<unsigned>(x[0]) == 1u << (i + 1));
-    }
-}
-
-TEST_CASE("Enumerate stress", "[enumerate]") {
-    std::vector<int> v;
-    std::stringstream ss_enumerate, ss_expected;
-
-    std::random_device rd;
-    std::default_random_engine mt(rd());
-    std::uniform_real_distribution<double> dist(1.0, 100.0);
-
-    for (auto i = 0ul; i < 1e5l; ++i) {
-        v.push_back(static_cast<int>(dist(mt)));
-        ss_expected << "x[" << i << "]=" << v.back() << " ";
+        REQUIRE(ss.str() == "0 0,e 1 2,a 2 44,c 3 52,d 4 324,b ");
     }
 
-    for (auto [i, x] : enumerate(v)) {
-        ss_enumerate << "x[" << i << "]=" << x << " ";
+    SECTION("Built-ins") {
+        std::vector<int> simple_array[] = {{2}, {4}, {8}, {16}};
+
+        for (auto [i, x] : enumerate(simple_array)) {
+            REQUIRE(static_cast<unsigned>(x[0]) == 1u << (i + 1));
+        }
     }
 
-    REQUIRE(ss_enumerate.str() == ss_expected.str());
-}
-
-template<typename T, std::size_t N>
-using arr_ref = T (&)[N];
-
-template<std::size_t S, typename T, std::size_t N>
-auto sub(arr_ref<T, N> a) -> arr_ref<T, N - S> {
-    return reinterpret_cast<arr_ref<T, N - S>>(a[S]);
+    SECTION("Rvalue") {
+        for (auto [i, x] : enumerate(std::vector<size_t>{0, 1, 2, 3, 4, 5, 6, 7, 8})) {
+            REQUIRE(i == x);
+        }
+    }
 }
 
 TEST_CASE("Example") {
@@ -257,6 +401,10 @@ TEST_CASE("Example") {
 
     for (auto [i, x] : enumerate(expected)) {
         REQUIRE(F[i] == x);
+    }
+
+    for (auto [idx, value] : indexed(0, 1, 2)) {
+        REQUIRE(idx == value);
     }
 }
 
@@ -277,14 +425,22 @@ TEST_CASE("Constexpr") {
     STATIC_REQUIRE(sum(stl_array) == 61);
 }
 
-TEST_CASE("Exceptions") {
+TEST_CASE("Exceptions", "zip") {
+    struct BadCollection: public std::vector<int> {
+        using std::vector<int>::vector;
+        BadCollection(BadCollection && other) noexcept(false) { }
+    };
     std::initializer_list<int> list = {1, 2, 3, 4, 5};
-    std::vector<int> vec = {1, 2, 3, 4, 5};
+    BadCollection collection = {1, 2, 3, 4, 5};
     STATIC_REQUIRE(noexcept(zip(list)));
-    STATIC_REQUIRE(!noexcept(zip(vec)));
+    STATIC_REQUIRE(!noexcept(zip(std::move(collection))));
 }
 
-TEST_CASE("Strong exception guarantee") {
+TEST_CASE("Zip returns forward range", "[zip]") {
+    STATIC_REQUIRE(std::ranges::forward_range<decltype(zip("str"sv))>);
+}
+
+TEST_CASE("Strong exception guarantee", "[zip]") {
     struct It {
         using value_type = int;
         using reference = int&;
@@ -292,9 +448,7 @@ TEST_CASE("Strong exception guarantee") {
         using difference_type = int;
 
         It() = default;
-        explicit It(int x)
-        : i{x} {
-        }
+        explicit It(int x): i{x} { }
         It(It const&) = default;
         It& operator++() {
             if (++i == 5)
@@ -364,43 +518,9 @@ TEST_CASE("Skip") {
     }
 }
 
-TEST_CASE("Rvalue") {
-    for (auto [i, x] : enumerate(std::vector<size_t>{0, 1, 2, 3, 4, 5, 6, 7, 8})) {
-        REQUIRE(i == x);
-    }
-}
 
-TEST_CASE("Rvalue-array") {
-    size_t array[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-    for (auto [i, x, y] : enumerate(std::vector<size_t>{0, 1, 2, 3, 4, 5, 6, 7, 8}, array)) {
-        REQUIRE(i == x);
-        REQUIRE(i == y);
-    }
-
-    size_t i = 0;
-    for (auto x : zip(zip(array, array), zip(array, array))) {
-        auto [ab, cd] = x;
-        auto [a, b] = ab;
-        auto [c, d] = cd;
-        REQUIRE(i == a);
-        REQUIRE(i == b);
-        REQUIRE(i == c);
-        REQUIRE(i == d);
-        ++i;
-    }
-}
-
-TEST_CASE("Rvalue no default constructor") {
-    struct A : public std::vector<int> {
-        A() = delete;
-        explicit A(int) : std::vector<int>(0) {}
-    };
-
-    A arr(0);
-    for (auto x : zip(arr)) {
-        static_cast<void>(x);
-    }
-    for (auto x : zip(A(0))) {
-        static_cast<void>(x);
+TEST_CASE("Enumerate elems") {
+    for (auto [i, val] : indexed(0u, 1u, 2u, 3u, 4u, 5u)) {
+        REQUIRE(i == val);
     }
 }

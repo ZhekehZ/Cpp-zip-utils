@@ -2,12 +2,13 @@
 
 #include "utils.hpp"
 
+#include <iterator>
+
 namespace zip_utils::detail::counter {
 
     class counting_iterator {
     public:
-        constexpr counting_iterator()
-            : index_(0){};
+        constexpr counting_iterator() : index_(0) {};
 
         using value_type = const std::size_t;
         using reference = value_type&;
@@ -23,7 +24,7 @@ namespace zip_utils::detail::counter {
             return *this;
         }
 
-        constexpr counting_iterator operator++(int) noexcept {
+        constexpr counting_iterator operator++(int) & noexcept {
             auto copy = *this;
             ++*this;
             return copy;
@@ -44,11 +45,13 @@ namespace zip_utils::detail::counter {
     inline constexpr counting_iterator end_count{};
 
     struct counter {
-        [[nodiscard]] constexpr static counting_iterator begin() noexcept {
+        [[nodiscard]]
+        constexpr static counting_iterator begin() noexcept {
             return counting_iterator{};
         }
 
-        [[nodiscard]] constexpr static counting_iterator end() noexcept {
+        [[nodiscard]]
+        constexpr static counting_iterator end() noexcept {
             return end_count;
         }
     };
@@ -56,4 +59,4 @@ namespace zip_utils::detail::counter {
     static_assert(std::forward_iterator<counting_iterator>);
     static_assert(std::ranges::forward_range<counter>);
 
-}// namespace zip_utils::detail::counter
+} // namespace zip_utils::detail::counter

@@ -1,160 +1,186 @@
 #pragma once
 
-#include "parameter_pack_utils.hpp"
 #include "utils.hpp"
+#include "configuration.hpp"
+
+#include <tuple>
 #include <concepts>
+#include <exception>
 #include <type_traits>
 
 namespace zip_utils::detail::impl {
 
-    template<std::forward_iterator... Iterators>
-    class zip_iterator {
+    template <configuration::zip_config Config, typename Mask, std::forward_iterator ... Iterators>
+    class zip_value : private std::tuple<Iterators ...> {
+    private:
+        using base = std::tuple<Iterators ...>;
+
     public:
-        using value_type = utils::iterator_pack<Iterators...>;
-        using reference = value_type&;
-        using iterator_category = std::forward_iterator_tag;
-        using difference_type = int;
-        using IterPack = utils::iterator_pack<Iterators...>;
+        using base::base;
 
-        constexpr zip_iterator() noexcept = default;
+        constexpr void increment()
+        noexcept ((noexcept(++std::get<Iterators>(static_cast<base &>(*this))) && ...)) {
+            if ((noexcept(++std::get<Iterators>(static_cast<base &>(*this))) && ...)) {
+                // noexcept
+                [&] <size_t ... Indices> (std::index_sequence<Indices...>) {
+                    (++std::get<Indices>(static_cast<base &>(*this)), ...);
+                }(std::make_index_sequence<sizeof...(Iterators)>{});
+            } else {
+                // strong exception guarantee
+                static_assert(std::is_nothrow_move_constructible_v<zip_value>,
+                    "One or more iterators are not nothrow constructible.");
 
-        constexpr explicit zip_iterator(Iterators... iterators) noexcept(noexcept(IterPack(iterators...)))
-            : iterator(iterators...) {
+                zip_value copy = *this;
+                try {
+                    [&]<size_t... Indices>(std::index_sequence<Indices...>) {
+                        (++std::get<Indices>(static_cast<base&>(*this)), ...);
+                    }
+                    (std::make_index_sequence<sizeof...(Iterators)>{});
+                } catch (...) {
+                    *this = std::move(copy);
+                    std::rethrow_exception(std::current_exception());
+                }
+            }
         }
+
+        constexpr bool equals(zip_value const & other) const
+        noexcept ((noexcept(std::get<Iterators>(static_cast<base const &>(*this)) ==
+            std::get<Iterators>(static_cast<base const &>(*this))) && ...)) {
+            auto & self = static_cast<base const &>(*this);
+            auto & that = static_cast<base const &>(other);
+            return [&] <size_t ... Indices> (std::index_sequence<Indices ...>) {
+                return ((std::get<Indices>(self) ==
+                    std::get<Indices>(that)) || ...);
+            }(std::make_index_sequence<sizeof...(Iterators)>{});
+        }
+
+        template<size_t I>
+        constexpr auto && get() & noexcept(noexcept(std::get<I>(static_cast<base &>(*this)))) {
+            using namespace configuration;
+            auto & self = static_cast<base &>(*this);
+            if constexpr (utils::mask_element<I, Mask> && contains<Config, zip_config::MOVE_FROM_RVALUES>) {
+                return std::move(*std::get<I>(self));
+            } else {
+                return *std::get<I>(self);
+            }
+        }
+
+        template<size_t I>
+        constexpr auto const & get() const & noexcept(noexcept(std::get<I>(static_cast<base const &>(*this)))) {
+            auto self = static_cast<base const &>(*this);
+            return *std::get<I>(self);
+        }
+
+        template<size_t I>
+        constexpr auto get() && noexcept(noexcept(std::get<I>(static_cast<base &&>(*this)))) {
+            using namespace configuration;
+            auto && self = static_cast<base &&>(*this);
+            if constexpr (utils::mask_element<I, Mask> && contains<Config, zip_config::MOVE_FROM_RVALUES>) {
+                return std::move(*std::get<I>(self));
+            } else {
+                return *std::get<I>(self);
+            }
+        }
+    };
+
+
+    template<configuration::zip_config Config, typename Mask, std::forward_iterator... Iterators>
+    class zip_iterator : private zip_value<Config, Mask, Iterators ...> {
+    private:
+        using base = zip_value<Config, Mask, Iterators ...>;
+
+    public:
+        explicit constexpr zip_iterator(Iterators && ... iterators)
+        noexcept (noexcept(base(std::forward<Iterators>(iterators) ...)))
+            : base(std::forward<Iterators>(iterators) ...)
+        {}
+
+        constexpr zip_iterator() noexcept(noexcept(base())) = default;
+
+        using value_type = base;
+        using reference = value_type &;
+        using const_reference = value_type const&;
+        using difference_type = int;
+        using iterator_category = std::forward_iterator_tag;
 
         constexpr reference operator*() const noexcept {
-            return const_cast<reference>(iterator);
+            return const_cast<reference>(static_cast<const_reference>(*this));
         }
 
-        constexpr zip_iterator& operator++() {
-            iterator.inc();
+        constexpr zip_iterator& operator++()
+        noexcept (noexcept(this->increment())) {
+            this->increment();
             return *this;
         }
 
-        constexpr zip_iterator operator++(int) noexcept(noexcept(zip_iterator(++*this))) {
+        constexpr zip_iterator operator++(int) &
+        noexcept (std::is_nothrow_copy_constructible_v<zip_iterator> && noexcept(this->increment())) {
             auto copy = *this;
-            ++*this;
+            this->increment();
             return copy;
         }
 
         constexpr bool operator==(zip_iterator const& other) const
-            noexcept(noexcept(iterator == iterator)) {
-            return iterator == other.iterator;
+        noexcept(noexcept(this->equals(other))) {
+            return this->equals(other);
         }
 
         constexpr bool operator!=(zip_iterator const& other) const
-            noexcept(noexcept(iterator == iterator)) {
-            return iterator != other.iterator;
+        noexcept(noexcept(this->equals(other))) {
+            return !this->equals(other);
         }
-
-        template<std::size_t I>
-        constexpr void next(std::size_t val) noexcept(noexcept(this->iterator.template next<I>(val))) {
-            iterator.template next<I>(val);
-        }
-
-    private:
-        IterPack iterator;
     };
 
-    static_assert(std::forward_iterator<zip_iterator<int*>>);
-
-    template<std::forward_iterator... Iterators>
-    class zip_impl {
-        static_assert(sizeof...(Iterators) > 0, "AT_LEAST_ONE_ARGUMENT_NEEDED");
-        using Iter = zip_iterator<Iterators...>;
-
-    public:
-        constexpr zip_impl(Iter&& begin, Iter&& end) noexcept(std::is_nothrow_move_constructible_v<Iter>)
-            : begin_(std::move(begin)), end_(std::move(end)) {
-        }
-
-        constexpr auto begin() const noexcept(std::is_nothrow_copy_constructible_v<Iter>) {
-            return begin_;
-        }
-
-        constexpr auto end() const noexcept(std::is_nothrow_copy_constructible_v<Iter>) {
-            return end_;
-        }
-
-    private:
-        Iter begin_;
-        Iter end_;
-    };
-
-    template<typename Storage, std::forward_iterator... Iterators>
-    class zip_impl_with_rvalue_collections {
-        static_assert(sizeof...(Iterators) > 0, "AT_LEAST_ONE_ARGUMENT_NEEDED");
-        using Iter = zip_iterator<Iterators...>;
-
-    public:
-        template<std::size_t... RvalueIndices, typename... Containers, std::size_t... Indices>
-        constexpr zip_impl_with_rvalue_collections(
-            parameter_pack_utils::Indices<RvalueIndices...>,
-            std::integer_sequence<std::size_t, Indices...>,
-            Containers&&... containers)
-            : storage_(), begin_(zip_iterator{
-                              std::begin(
-                                  utils::save_to_storage<Indices, Storage, Containers, RvalueIndices...>(
-                                      storage_, std::forward<Containers>(containers)))...}),
-              end_(zip_iterator{
-                  std::end(
-                      utils::get_from_storage<Indices, Storage, Containers, RvalueIndices...>(
-                          storage_, std::forward<Containers>(containers)))...}) {
-        }
-
-        constexpr auto begin() const noexcept(std::is_nothrow_copy_constructible_v<Iter>) {
-            return begin_;
-        }
-
-        constexpr auto end() const noexcept(std::is_nothrow_copy_constructible_v<Iter>) {
-            return end_;
-        }
-
-    private:
-        Storage storage_;
-        Iter begin_;
-        Iter end_;
-    };
-
-    template<typename... Containers>
-    constexpr auto make_zip_impl(Containers&&... containers) {
-        return zip_impl{zip_iterator{std::begin(containers)...},
-                        zip_iterator{std::end(containers)...}};
+    template <configuration::zip_config Config, typename Mask, std::forward_iterator ... Iterators>
+    constexpr auto make_zip_iterator(Iterators && ... iterators)
+    noexcept(noexcept(zip_iterator<Config, Mask, Iterators ...>(std::forward<Iterators>(iterators)...))) {
+        return zip_iterator<Config, Mask, Iterators ...>(std::forward<Iterators>(iterators)...);
     }
 
-    template<typename... Containers>
-    constexpr auto make_zip_impl_with_rvalue_collections(Containers&&... containers) {
-        using namespace parameter_pack_utils;
-        using Rvalues = map<wrap<std::optional>::impl, map<std::decay, filter<std::is_rvalue_reference, Containers&&...>>>;
-        using RvalueIndices = filter_indices<std::is_rvalue_reference, Containers&&...>;
+    template<configuration::zip_config Config, std::ranges::forward_range... Containers>
+    class zip_impl : private std::tuple<Containers...> {
+        using base = std::tuple<Containers...>;
+        using mask = utils::types_to_rvalues_mask<Containers && ...>;
 
-        return zip_impl_with_rvalue_collections<
-            Rvalues,
-            std::decay_t<decltype(std::begin(containers))>...>(
-            RvalueIndices{},
-            std::make_integer_sequence<std::size_t, sizeof...(Containers)>{},
-            std::forward<Containers>(containers)...);
-    }
+        static_assert(sizeof...(Containers) > 0, "At least one container required.");
 
-}// namespace zip_utils::detail::impl
+    public:
+        using std::tuple<Containers...>::tuple;
+
+        constexpr auto begin()
+            noexcept(noexcept(make_zip_iterator<Config, mask>(std::begin(std::get<Containers>(static_cast<base&>(*this)))...))) {
+            return [&] <size_t ... Indices> (std::index_sequence<Indices ...>) {
+                return make_zip_iterator<Config, mask>(std::begin(std::get<Indices>(static_cast<base &>(*this))) ...);
+            } (std::make_index_sequence<sizeof ... (Containers)>{});
+        }
+
+        constexpr auto end()
+            noexcept(noexcept(make_zip_iterator<Config, mask>(std::end(std::get<Containers>(static_cast<base&>(*this)))...))) {
+            return [&]<size_t... Indices>(std::index_sequence<Indices...>) {
+                return make_zip_iterator<Config, mask>(std::end(std::get<Indices>(static_cast<base&>(*this)))...);
+            }
+            (std::make_index_sequence<sizeof...(Containers)>{});
+        }
+    };
+
+} // namespace zip_utils::detail::impl
 
 namespace std {
 
-    template<typename... Iterators>
-    struct tuple_size<zip_utils::detail::utils::iterator_pack<Iterators...>> {
-        static constexpr std::size_t value = sizeof...(Iterators);
+    template<zip_utils::configuration::zip_config Config, typename Mask, typename ... Types>
+    struct tuple_size<zip_utils::detail::impl::zip_value<Config, Mask, Types ...>> {
+        static constexpr std::size_t value = sizeof...(Types);
     };
 
-    template<std::size_t I, std::forward_iterator... Iterators>
-    struct tuple_element<I, zip_utils::detail::utils::iterator_pack<Iterators...>> {
-        using iterator = tuple_element_t<I, tuple<Iterators...>>;
-        using reference = typename iterator_traits<iterator>::reference;
-        using type = std::remove_reference_t<reference>;
+    template<zip_utils::configuration::zip_config Config, std::size_t I, typename Mask, typename ... Types>
+    struct tuple_element<I, zip_utils::detail::impl::zip_value<Config, Mask, Types ...>> {
+        using iterator = tuple_element_t<I, tuple<Types ...>>;
+        using type = std::remove_reference_t<typename iterator_traits<iterator>::reference>;
     };
 
-    template<std::size_t I, std::forward_iterator... Iterators>
-    struct tuple_element<I, const zip_utils::detail::utils::iterator_pack<Iterators...>> {
-        using type = const tuple_element_t<I, zip_utils::detail::utils::iterator_pack<Iterators...>>;
+    template<zip_utils::configuration::zip_config Config, std::size_t I, typename Mask, typename ... Types>
+    struct tuple_element<I, zip_utils::detail::impl::zip_value<Config, Mask, Types...> const> {
+        using type = const tuple_element_t<I, zip_utils::detail::impl::zip_value<Config, Mask, Types ...>>;
     };
 
 }// namespace std
