@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <type_traits>
+#include <tuple>
 
 
 namespace zip_utils::detail::utils {
