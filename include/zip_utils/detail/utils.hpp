@@ -1,13 +1,15 @@
 #pragma once
 
+#include <cstddef>
 #include <type_traits>
+
 
 namespace zip_utils::detail::utils {
 
     template <bool... Values>
     struct bool_mask {};
 
-    template <size_t I, bool Value, bool... Values>
+    template <std::size_t I, bool Value, bool... Values>
     constexpr bool mask_element_impl(bool_mask<Value, Values...>) {
         if constexpr (I == 0) {
             return Value;
@@ -16,7 +18,7 @@ namespace zip_utils::detail::utils {
         }
     }
 
-    template <size_t I, typename Mask>
+    template <std::size_t I, typename Mask>
     constexpr bool mask_element = mask_element_impl<I>(Mask{});
 
     template <typename... Types>
@@ -47,7 +49,7 @@ namespace zip_utils::detail::utils {
     static_assert(std::is_same_v<int, remove_rvalue_ref_t<const int &&>>);
     static_assert(std::is_same_v<int, remove_rvalue_ref_t<int &&>>);
 
-    template <size_t I, typename... Types>
+    template <std::size_t I, typename... Types>
     using get_at = std::tuple_element_t<I, std::tuple<Types...>>;
 
 }  // namespace zip_utils::detail::utils

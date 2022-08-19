@@ -1,15 +1,13 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 #include <exception>
 #include <tuple>
 #include <type_traits>
 
 #include "configuration.hpp"
 #include "utils.hpp"
-
-#define IndexedLambda(Index, VarArgs) \
-    [&]<size_t... Index>(std::index_sequence<Index...> = std::make_index_sequence<sizeof...(VarArgs)>{})
 
 
 namespace zip_utils::detail::impl {
@@ -26,7 +24,7 @@ namespace zip_utils::detail::impl {
         constexpr void increment() noexcept((noexcept(++std::get<Iterators>(static_cast<base &>(*this))) && ...)) {
             if ((noexcept(++std::get<Iterators>(static_cast<base &>(*this))) && ...)) {
                 // noexcept
-                [&]<size_t... Indices>(std::index_sequence<Indices...>) {
+                [&]<std::size_t... Indices>(std::index_sequence<Indices...>) {
                     (++std::get<Indices>(static_cast<base &>(*this)), ...);
                 }
                 (std::make_index_sequence<sizeof...(Iterators)>{});
@@ -37,7 +35,7 @@ namespace zip_utils::detail::impl {
 
                 zip_value copy = *this;
                 try {
-                    [&]<size_t... Indices>(std::index_sequence<Indices...>) {
+                    [&]<std::size_t... Indices>(std::index_sequence<Indices...>) {
                         (++std::get<Indices>(static_cast<base &>(*this)), ...);
                     }
                     (std::make_index_sequence<sizeof...(Iterators)>{});
@@ -54,13 +52,13 @@ namespace zip_utils::detail::impl {
                       ...)) {
             auto &self = static_cast<base const &>(*this);
             auto &that = static_cast<base const &>(other);
-            return [&]<size_t... Indices>(std::index_sequence<Indices...>) {
+            return [&]<std::size_t... Indices>(std::index_sequence<Indices...>) {
                 return ((std::get<Indices>(self) == std::get<Indices>(that)) || ...);
             }
             (std::make_index_sequence<sizeof...(Iterators)>{});
         }
 
-        template <size_t I>
+        template <std::size_t I>
         constexpr auto &&get() &noexcept(noexcept(std::get<I>(static_cast<base &>(*this)))) {
             using namespace configuration;
             auto &self = static_cast<base &>(*this);
@@ -71,13 +69,13 @@ namespace zip_utils::detail::impl {
             }
         }
 
-        template <size_t I>
+        template <std::size_t I>
         constexpr auto const &get() const &noexcept(noexcept(std::get<I>(static_cast<base const &>(*this)))) {
             auto self = static_cast<base const &>(*this);
             return *std::get<I>(self);
         }
 
-        template <size_t I>
+        template <std::size_t I>
         constexpr auto get() &&noexcept(noexcept(std::get<I>(static_cast<base &&>(*this)))) {
             using namespace configuration;
             auto &&self = static_cast<base &&>(*this);
@@ -153,7 +151,7 @@ namespace zip_utils::detail::impl {
 
         constexpr auto begin() noexcept(noexcept(
             make_zip_iterator<Config, mask>(std::begin(std::get<Containers>(static_cast<base &>(*this)))...))) {
-            return [&]<size_t... Indices>(std::index_sequence<Indices...>) {
+            return [&]<std::size_t... Indices>(std::index_sequence<Indices...>) {
                 return make_zip_iterator<Config, mask>(std::begin(std::get<Indices>(static_cast<base &>(*this)))...);
             }
             (std::make_index_sequence<sizeof...(Containers)>{});
@@ -161,7 +159,7 @@ namespace zip_utils::detail::impl {
 
         constexpr auto end() noexcept(
             noexcept(make_zip_iterator<Config, mask>(std::end(std::get<Containers>(static_cast<base &>(*this)))...))) {
-            return [&]<size_t... Indices>(std::index_sequence<Indices...>) {
+            return [&]<std::size_t... Indices>(std::index_sequence<Indices...>) {
                 return make_zip_iterator<Config, mask>(std::end(std::get<Indices>(static_cast<base &>(*this)))...);
             }
             (std::make_index_sequence<sizeof...(Containers)>{});

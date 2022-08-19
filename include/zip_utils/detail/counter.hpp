@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cstddef>
 #include <iterator>
 
 #include "utils.hpp"
+
 
 namespace zip_utils::detail::counter {
 
