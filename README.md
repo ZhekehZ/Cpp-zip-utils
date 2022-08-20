@@ -4,12 +4,18 @@ _Some structured_binding-friendly functions for `C+-`_
 
 ---
 ### Installation ###
-```bash
-mkdir -p build && \
-cmake -B build && \
-cmake --build build --target test && \
-sudo cmake --build build --target install
-```
+- via Cmake
+    ```bash
+    mkdir -p build && \
+    cmake -B build && \
+    cmake --build build --target test && \
+    sudo cmake --build build --target install
+    ```
+- via Conan
+    ```bash
+    sh conan/install.sh
+    # see "example" subproject
+    ```
 ---
 ### Declaration ###
 ```c++
