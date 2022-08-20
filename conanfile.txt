@@ -1,5 +1,0 @@
-[requires]
-  Catch2/3.1.0
-
-[generators]
-  cmake
