@@ -21,8 +21,12 @@ namespace zip_utils::detail::impl {
        public:
         using base::base;
 
-        constexpr void increment() noexcept((noexcept(++std::get<Iterators>(static_cast<base &>(*this))) && ...)) {
-            if ((noexcept(++std::get<Iterators>(static_cast<base &>(*this))) && ...)) {
+        constexpr void increment() noexcept(requires(Iterators... its) {
+                                                { (++its, ...) } noexcept;
+                                            }) {
+            if (requires(Iterators... its) {
+                    { (++its, ...) } noexcept;
+                }) {
                 // noexcept
                 [&]<std::size_t... Indices>(std::index_sequence<Indices...>) {
                     (++std::get<Indices>(static_cast<base &>(*this)), ...);
@@ -46,10 +50,9 @@ namespace zip_utils::detail::impl {
             }
         }
 
-        constexpr bool equals(zip_value const &other) const
-            noexcept((noexcept(std::get<Iterators>(static_cast<base const &>(*this)) ==
-                               std::get<Iterators>(static_cast<base const &>(*this))) &&
-                      ...)) {
+        constexpr bool equals(zip_value const &other) const noexcept(requires(Iterators... its) {
+                                                                         { ((its == its), ...) } noexcept;
+                                                                     }) {
             auto &self = static_cast<base const &>(*this);
             auto &that = static_cast<base const &>(other);
             return [&]<std::size_t... Indices>(std::index_sequence<Indices...>) {
@@ -149,16 +152,18 @@ namespace zip_utils::detail::impl {
        public:
         using std::tuple<Containers...>::tuple;
 
-        constexpr auto begin() noexcept(noexcept(
-            make_zip_iterator<Config, mask>(std::begin(std::get<Containers>(static_cast<base &>(*this)))...))) {
+        constexpr auto begin() noexcept(requires(Containers... cons) {
+                                            { make_zip_iterator<Config, mask>(std::begin(cons)...) } noexcept;
+                                        }) {
             return [&]<std::size_t... Indices>(std::index_sequence<Indices...>) {
                 return make_zip_iterator<Config, mask>(std::begin(std::get<Indices>(static_cast<base &>(*this)))...);
             }
             (std::make_index_sequence<sizeof...(Containers)>{});
         }
 
-        constexpr auto end() noexcept(
-            noexcept(make_zip_iterator<Config, mask>(std::end(std::get<Containers>(static_cast<base &>(*this)))...))) {
+        constexpr auto end() noexcept(requires(Containers... cons) {
+                                          { make_zip_iterator<Config, mask>(std::end(cons)...) } noexcept;
+                                      }) {
             return [&]<std::size_t... Indices>(std::index_sequence<Indices...>) {
                 return make_zip_iterator<Config, mask>(std::end(std::get<Indices>(static_cast<base &>(*this)))...);
             }

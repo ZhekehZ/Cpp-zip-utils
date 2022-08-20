@@ -405,7 +405,7 @@ TEST_CASE("Example") {
         REQUIRE(F[i] == x);
     }
 
-    for (auto [idx, value] : indexed(0, 1, 2)) {
+    for (auto [idx, value] : indexed(0u, 1u, 2u)) {
         REQUIRE(idx == value);
     }
 }
