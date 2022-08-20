@@ -1,0 +1,15 @@
+---
+BasedOnStyle: Google
+AlignAfterOpenBracket: Align
+CompactNamespaces: true
+FixNamespaceComments: true
+IndentWidth: 4
+NamespaceIndentation: All
+SortIncludes: CaseInsensitive
+TabWidth: 4
+UseTab: Never
+Standard: c++20
+ColumnLimit: 120
+AllowShortFunctionsOnASingleLine: Empty
+MaxEmptyLinesToKeep: 2
+...
