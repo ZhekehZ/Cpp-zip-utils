@@ -13,8 +13,9 @@ _Some structured_binding-friendly functions for `C+-`_
     ```
 - via Conan
     ```bash
-    sh conan/install.sh
-    # see "example" subproject
+    sh conan/install.sh.bat # linux
+    .\conan\install.sh.bat # windows
+    # see the "example" subproject as an usage example
     ```
 ---
 ### Declaration ###
