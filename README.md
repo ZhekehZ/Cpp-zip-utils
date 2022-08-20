@@ -56,7 +56,7 @@ void test_10_fibonacci() {
     }
     
     // indexed view
-    for (auto [idx, value] : indexed(1, 2, 3)) {
+    for (auto [idx, value] : indexed(0u, 1u, 2u)) {
         assert(idx == value);
     }
 }
