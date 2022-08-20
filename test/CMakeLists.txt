@@ -6,22 +6,20 @@ if (NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
     file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/master/conan.cmake"
             "${CMAKE_BINARY_DIR}/conan.cmake")
 endif ()
-include(${CMAKE_BINARY_DIR}/conan.cmake)
-include(CTest)
 
+include(${CMAKE_BINARY_DIR}/conan.cmake)
 conan_cmake_run(REQUIRES catch2/2.13.7
         BASIC_SETUP NO_OUTPUT_DIRS CMAKE_TARGETS)
+include(CTest)
 
 add_executable(zip_utils_all_tests)
-
 target_sources(zip_utils_all_tests PRIVATE main.cpp tests.cpp)
-
 target_include_directories(
         zip_utils_all_tests
-        PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
-        $<BUILD_INTERFACE:${CONAN_INCLUDE_DIRS_CATCH2}/catch2>)
-
+        PRIVATE
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+            ${CONAN_INCLUDE_DIRS})
 
 set_target_properties(
         zip_utils_all_tests

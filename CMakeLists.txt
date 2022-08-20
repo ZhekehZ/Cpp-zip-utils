@@ -18,6 +18,7 @@ target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 
 enable_testing()
 add_subdirectory(test)
+add_subdirectory(example)
 
 install(TARGETS ${PROJECT_NAME}
         EXPORT ${PROJECT_NAME}_Targets

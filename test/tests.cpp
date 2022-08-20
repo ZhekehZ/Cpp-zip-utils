@@ -1,6 +1,6 @@
 #include <zip_utils/zip_utils.hpp>
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <array>
 #include <map>
@@ -68,7 +68,7 @@ TEST_CASE("References", "[zip]") {
         std::array<int, 1> b{};
 
         INFO("`a` is passed by reference, and its elements are copied."
-             "Assignment doesn't affect `a`.")
+             "Assignment doesn't affect `a`.");
         for (auto [x, y] : zip(a, b)) {
             x.value = 3;
         }
@@ -86,7 +86,7 @@ TEST_CASE("References", "[zip]") {
         std::array<int, 1> b{};
 
         INFO("`a` and its elements are passed by reference."
-             "Assignment changes `a`'s elements.")
+             "Assignment changes `a`'s elements.");
         for (auto& [x, y] : zip(a, b)) {
             x.value = 3;
         }
@@ -111,7 +111,7 @@ TEST_CASE("References", "[zip]") {
         std::array<int, 1> b{};
 
         INFO("`a` and its elements are passed by reference."
-             "Assignment changes `a`'s elements.")
+             "Assignment changes `a`'s elements.");
         for (auto&& [x, y] : zip(a, b)) {
             x.value = 3;
         }
@@ -135,7 +135,7 @@ TEST_CASE("References", "[zip]") {
         std::array<A, 1> a = { A(12) };
         std::array<int, 1> b{};
 
-        INFO("`a` is moved inside zip object, its elements are copied to x.")
+        INFO("`a` is moved inside zip object, its elements are copied to x.");
         for (auto [x, y] : zip(std::move(a), b)) {
             x.value = 4;
         }
@@ -147,7 +147,7 @@ TEST_CASE("References", "[zip]") {
         a = { A(12) };
         A::reset();
 
-        INFO("`a` is moved inside zip object, its elements are moved to x.")
+        INFO("`a` is moved inside zip object, its elements are moved to x.");
         for (auto [x, y] : zip<zip_config::MOVE_FROM_RVALUES>(std::move(a), b)) {
             x.value = 4;
         }
@@ -164,7 +164,7 @@ TEST_CASE("References", "[zip]") {
         std::array<int, 1> b{};
 
         INFO("`a` is moved inside zip object, "
-             "its elements are taken by reference.")
+             "its elements are taken by reference.");
         for (auto & [x, y] : zip(std::move(a), b)) {
             x.value = 4;
         }
@@ -181,7 +181,7 @@ TEST_CASE("References", "[zip]") {
         std::array<int, 1> b{};
 
         INFO("`a` is moved inside zip object, "
-             "its elements are taken by reference.")
+             "its elements are taken by reference.");
         for (auto && [x, y] : zip(std::move(a), b)) {
             x.value = 4;
         }
@@ -197,7 +197,7 @@ TEST_CASE("References", "[zip]") {
         std::array<int, 1> b{};
 
         INFO("Collection is moved inside zip object, "
-             "its elements are moved to x.")
+             "its elements are moved to x.");
         for (auto [x, y] : zip<zip_config::MOVE_FROM_RVALUES>(std::array<A, 1>{A(12)}, b)) {
             x.value = 4;
         }
@@ -212,7 +212,7 @@ TEST_CASE("References", "[zip]") {
         std::array<int, 1> b{};
 
         INFO("Collection is moved inside zip object, "
-             "its elements are taken by reference.")
+             "its elements are taken by reference.");
         for (auto & [x, y] : zip(std::array<A, 1>{A(12)}, b)) {
             x.value = 4;
         }
@@ -227,7 +227,7 @@ TEST_CASE("References", "[zip]") {
         std::array<int, 1> b{};
 
         INFO("Collection is moved inside zip object, "
-             "its elements are taken by reference.")
+             "its elements are taken by reference.");
         for (auto && [x, y] : zip(std::array<A, 1>{A(12)}, b)) {
             x.value = 4;
         }
@@ -241,13 +241,13 @@ TEST_CASE("Modification", "[zip]") {
     std::vector u = {1, 2, 3, 4, 5};
     std::vector v = {'x', 'y', 'z'};
 
-    INFO("Values are copied.")
+    INFO("Values are copied.");
     for (auto [x, y] : zip(u, v)) {
         x = y;
     }
     REQUIRE((v[0] != u[0] && v[1] != u[1] && v[2] != u[2]));
 
-    INFO("Values are taken by reference.")
+    INFO("Values are taken by reference.");
     for (auto& [x, y] : zip(u, v)) {
         x = y;
     }
