@@ -10,7 +10,8 @@ if (NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
 endif ()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
-conan_cmake_run(REQUIRES ZipUtils/0.1 BASIC_SETUP NO_OUTPUT_DIRS CMAKE_TARGETS)
+conan_cmake_run(REQUIRES ZipUtils/0.1@zhekehz/stable
+        BASIC_SETUP NO_OUTPUT_DIRS CMAKE_TARGETS)
 
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)

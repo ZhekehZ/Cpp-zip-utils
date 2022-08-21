@@ -18,8 +18,8 @@ class ZipUtilsConan(ConanFile):
     license = "MIT"
     author = "Eugene Kravchenko"
 
-    default_user = '_'
-    default_channel = '_'
+    default_user = 'zhekehz'
+    default_channel = 'stable'
 
     no_copy_source = True
 
