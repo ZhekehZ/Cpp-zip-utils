@@ -16,7 +16,7 @@ _Some structured_binding-friendly functions for `C+-`_
     # cd to any directory
     curl -o conanfile.py https://raw.githubusercontent.com/ZhekehZ/Cpp-zip-utils/master/conan/conanfile.py && conan create conanfile.py
     ```
-    see the [exmaple subproject](example) as an usage example
+    see the [exmaple subproject](example)
 ---
 ### Declaration ###
 ```c++
