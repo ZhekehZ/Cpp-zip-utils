@@ -1,6 +1,9 @@
 ## Cpp-zip-utils [c++20] ##
-[![CMake](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml/badge.svg?branch=dev)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml)  
-_Some structured_binding-friendly functions for `C+-`_
+[![CMake](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml/badge.svg?branch=master)](https://github.com/ZhekehZ/Cpp-zip-utils/actions/workflows/cmake.yml)
+[![Conan version - ZipUtils/0.1@zhekehz/stable](https://img.shields.io/badge/Conan_version-ZipUtils%2F0.1%40zhekehz%2Fstable-6699cb?logo=conan&logoColor=6699cb)](https://https://zhekehz.jfrog.io/artifactory/api/conan/zhekehz-conan)
+[![20](https://img.shields.io/badge/20-red?logo=c%2B%2B)](https://)  
+
+_Some structured_binding-friendly functions for `C++`_
 
 ---
 ### Installation ###
