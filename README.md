@@ -13,8 +13,8 @@ _Some structured_binding-friendly functions for `C+-`_
     ```
 - via Conan
     ```bash
-    sh conan/install.sh.bat # linux
-    .\conan\install.sh.bat # windows
+    # cd to any directory
+    curl -o conanfile.py https://raw.githubusercontent.com/ZhekehZ/Cpp-zip-utils/master/conan/conanfile.py && conan create conanfile.py
     # see the "example" subproject as an usage example
     ```
 ---

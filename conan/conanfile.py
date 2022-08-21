@@ -7,7 +7,7 @@ class ZipUtilsConan(ConanFile):
         'type': 'git',
         'subfolder': '',
         'url': 'https://github.com/ZhekehZ/Cpp-zip-utils.git',
-        'revision': os.environ.get('ZIP_UTILS_REVISION', 'auto')
+        'revision': os.environ.get('ZIP_UTILS_REVISION', 'master')
     }
 
     name = "ZipUtils"
