@@ -13,8 +13,7 @@ _Some structured_binding-friendly functions for `C+-`_
     ```
 - via Conan
     ```bash
-    # cd to any directory
-    curl -o conanfile.py https://raw.githubusercontent.com/ZhekehZ/Cpp-zip-utils/master/conan/conanfile.py && conan create conanfile.py
+    conan remote add conan-zhekehz https://zhekehz.jfrog.io/artifactory/api/conan/zhekehz-conan
     ```
     see the [exmaple subproject](example)
 ---
