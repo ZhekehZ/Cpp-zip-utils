@@ -13,7 +13,7 @@ _Some structured_binding-friendly functions for `C+-`_
     ```
 - via Conan
     ```bash
-    conan remote add conan-zhekehz https://zhekehz.jfrog.io/artifactory/api/conan/zhekehz-conan
+    conan remote add zhekehz-conan https://zhekehz.jfrog.io/artifactory/api/conan/zhekehz-conan
     ```
     see the [exmaple subproject](example)
 ---
