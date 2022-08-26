@@ -72,4 +72,5 @@ jobs:
           cd example
           cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+          tree ${{github.workspace}}/build
           ${{github.workspace}}/build/bin/example-project
