@@ -48,3 +48,28 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
+  
+  
+  run-example-peoject:
+    runs-on: ubuntu-latest
+    
+    env:
+      CC:   gcc-10
+      CXX:  g++-10
+      CONAN_REVISIONS_ENABLED: 1
+      
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Get Conan
+        uses: turtlebrowser/get-conan@v1.1
+      
+      - name: Add Conan remote
+        run: conan remote add zhekehz-conan https://zhekehz.jfrog.io/artifactory/api/conan/zhekehz-conan
+      
+      - name: Build and run example
+        run: |
+          cd example
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+          ${{github.workspace}}/build/bin/example-project
