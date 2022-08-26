@@ -7,7 +7,7 @@ _Some structured_binding-friendly functions for `C++`_
 
 ---
 ### Installation ###
-- via Cmake
+- via CMake
     ```bash
     mkdir -p build && \
     cmake -B build && \
@@ -15,10 +15,15 @@ _Some structured_binding-friendly functions for `C++`_
     sudo cmake --build build --target install
     ```
 - via Conan
-    ```bash
-    conan remote add zhekehz-conan https://zhekehz.jfrog.io/artifactory/api/conan/zhekehz-conan
-    ```
-    see the [exmaple subproject](example)
+    1. add Conan remote
+        ```bash
+        conan remote add zhekehz-conan https://zhekehz.jfrog.io/artifactory/api/conan/zhekehz-conan
+        ```
+    2. Configure CMake:
+        ```cmake
+        conan_cmake_run(REQUIRES ZipUtils/0.1@zhekehz/stable)
+        ```
+    see the [exmaple subproject](example) for more details
 ---
 ### Declaration ###
 ```c++
