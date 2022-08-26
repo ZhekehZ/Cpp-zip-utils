@@ -13,8 +13,7 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 conan_cmake_run(REQUIRES ZipUtils/0.1@zhekehz/stable
         BASIC_SETUP NO_OUTPUT_DIRS CMAKE_TARGETS)
 
-add_executable(${PROJECT_NAME})
-target_sources(${PROJECT_NAME} PRIVATE main.cpp)
+add_executable(${PROJECT_NAME} main.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CONAN_INCLUDE_DIRS})
 
 set_target_properties(
